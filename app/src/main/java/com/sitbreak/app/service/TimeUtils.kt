@@ -1,8 +1,17 @@
 package com.sitbreak.app.service
 
 import java.util.Calendar
+import java.util.TimeZone
 
 object TimeUtils {
+
+    /**
+     * 设备当前时区相对于 UTC 的偏移量（毫秒，含夏令时）。
+     * 用于把 UTC 时间戳按"本地自然日/月"分桶，避免东八区等场景下统计错位。
+     */
+    fun getLocalTimezoneOffset(): Long {
+        return TimeZone.getDefault().getOffset(System.currentTimeMillis()).toLong()
+    }
 
     fun getTodayStartMillis(): Long {
         val cal = Calendar.getInstance()
@@ -43,6 +52,11 @@ object TimeUtils {
         }
         val calendar = Calendar.getInstance()
         val currentHour = calendar.get(Calendar.HOUR_OF_DAY)
-        return currentHour in workStartHour until workEndHour
+        return if (workEndHour <= workStartHour) {
+            // 跨夜班次（如 22:00 ~ 06:00）
+            currentHour >= workStartHour || currentHour < workEndHour
+        } else {
+            currentHour in workStartHour until workEndHour
+        }
     }
 }

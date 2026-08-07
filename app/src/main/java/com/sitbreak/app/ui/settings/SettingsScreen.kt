@@ -49,6 +49,7 @@ import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
@@ -80,8 +81,10 @@ import com.sitbreak.app.ui.theme.PageBackground
 import com.sitbreak.app.ui.theme.TextPrimary
 import com.sitbreak.app.ui.theme.TextSecondary
 import com.sitbreak.app.ui.theme.TextTertiary
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.sitbreak.app.R
@@ -940,21 +943,26 @@ private fun SoundPickerSheet(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    val soundUris = remember {
-        val rm = android.media.RingtoneManager(context)
-        rm.setType(android.media.RingtoneManager.TYPE_NOTIFICATION)
-        val cursor = rm.cursor
-        val uris = mutableListOf<Uri>()
-        if (cursor != null) {
-            for (i in 0 until minOf(5, cursor.count)) {
-                uris.add(rm.getRingtoneUri(i))
+    val defaultUri = android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_NOTIFICATION)
+    var soundUris by remember { mutableStateOf(List(5) { defaultUri }) }
+
+    LaunchedEffect(Unit) {
+        withContext(Dispatchers.IO) {
+            val rm = android.media.RingtoneManager(context)
+            rm.setType(android.media.RingtoneManager.TYPE_NOTIFICATION)
+            val cursor = rm.cursor
+            val uris = mutableListOf<Uri>()
+            if (cursor != null) {
+                for (i in 0 until minOf(5, cursor.count)) {
+                    uris.add(rm.getRingtoneUri(i))
+                }
+                cursor.close()
             }
-            cursor.close()
+            while (uris.size < 5) {
+                uris.add(defaultUri)
+            }
+            soundUris = uris
         }
-        while (uris.size < 5) {
-            uris.add(android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_NOTIFICATION))
-        }
-        uris
     }
 
     fun stopAndRelease() {
@@ -990,6 +998,10 @@ private fun SoundPickerSheet(
         } catch (_: Exception) {
             stopAndRelease()
         }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose { stopAndRelease() }
     }
 
     ModalBottomSheet(

@@ -7,6 +7,8 @@ import com.sitbreak.app.data.CheckInRepository
 import com.sitbreak.app.data.SettingsDataStore
 import com.sitbreak.app.data.db.AppDatabase
 import com.sitbreak.app.data.db.CheckInDao
+import com.sitbreak.app.data.db.CheckInRecord
+import com.sitbreak.app.service.TimeUtils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -59,8 +61,9 @@ class StatsViewModel(application: Application) : AndroidViewModel(application) {
             val target = if (workingHours > 0) (workingHours * 60) / interval else 0
             _dailyTarget.value = target
 
+            val tzOffset = TimeUtils.getLocalTimezoneOffset()
             val sevenDaysAgo = getSevenDaysAgo()
-            val counts = repository.getDailyCountsForLast7Days(sevenDaysAgo)
+            val counts = repository.getDailyCountsForLast7Days(sevenDaysAgo, tzOffset)
 
             val barDataList = buildBarDataList(counts, target)
             _dailyCounts.value = barDataList
@@ -78,7 +81,8 @@ class StatsViewModel(application: Application) : AndroidViewModel(application) {
 
     private suspend fun calculateLongestStreak(target: Int): Int {
         if (target <= 0) return 0
-        val allDayCounts = repository.getAllDayCountsByType("stand_up")
+        val tzOffset = TimeUtils.getLocalTimezoneOffset()
+        val allDayCounts = repository.getAllDayCountsByType(CheckInRecord.TYPE_STAND_UP, tzOffset)
         if (allDayCounts.isEmpty()) return 0
 
         var maxStreak = 0
@@ -179,8 +183,9 @@ class StatsViewModel(application: Application) : AndroidViewModel(application) {
             val target = if (workingHours > 0) (workingHours * 60) / interval else 0
             _dailyTarget.value = target
 
+            val tzOffset = TimeUtils.getLocalTimezoneOffset()
             val sevenDaysAgo = getSevenDaysAgo()
-            val counts = repository.getDailyCountsForLast7Days(sevenDaysAgo)
+            val counts = repository.getDailyCountsForLast7Days(sevenDaysAgo, tzOffset)
 
             val barDataList = buildBarDataList(counts, target)
             _dailyCounts.value = barDataList
@@ -219,7 +224,8 @@ class StatsViewModel(application: Application) : AndroidViewModel(application) {
             calendar.set(Calendar.MILLISECOND, 0)
             val yearStart = calendar.timeInMillis
 
-            val counts = repository.getMonthlyCountsForYear(yearStart)
+            val tzOffset = TimeUtils.getLocalTimezoneOffset()
+            val counts = repository.getMonthlyCountsForYear(yearStart, tzOffset)
 
             val barDataList = mutableListOf<MonthlyBarData>()
             var totalCompleted = 0

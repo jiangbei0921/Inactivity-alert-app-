@@ -12,6 +12,7 @@ import androidx.core.app.NotificationCompat
 import com.sitbreak.app.TimerState
 import com.sitbreak.app.data.NotificationSettingsDataStore
 import com.sitbreak.app.data.SettingsDataStore
+import com.sitbreak.app.ui.reminder.ReminderActivity
 import kotlinx.coroutines.flow.first
 
 object NotificationHelper {
@@ -100,6 +101,15 @@ object NotificationHelper {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        val reminderIntent = Intent(context, ReminderActivity::class.java).apply {
+            putExtra(ReminderActivity.EXTRA_SITTING_MINUTES, sittingMinutes)
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        val fullScreenPendingIntent = PendingIntent.getActivity(
+            context, 12, reminderIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         val notification = NotificationCompat.Builder(context, CHANNEL_SITTING_REMINDER)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentTitle("你已经连续久坐 ${sittingMinutes} 分钟")
@@ -109,6 +119,7 @@ object NotificationHelper {
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setGroup(GROUP_KEY_REMINDERS)
             .setVibrate(if (vibrationEnabled) longArrayOf(0, 300, 200, 300) else null)
+            .setFullScreenIntent(fullScreenPendingIntent, true)
             .addAction(0, "我站起来了", standUpPendingIntent)
             .addAction(0, "延迟5分钟", snoozePendingIntent)
             .apply {

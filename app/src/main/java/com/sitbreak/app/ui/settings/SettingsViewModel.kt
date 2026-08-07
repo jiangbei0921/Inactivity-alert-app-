@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.sitbreak.app.data.SettingsDataStore
+import com.sitbreak.app.notification.NotificationHelper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -150,22 +151,34 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     fun setVibrationEnabled(enabled: Boolean) {
         _isVibrationEnabled.value = enabled
-        viewModelScope.launch { settingsDataStore.setVibrationEnabled(enabled) }
+        viewModelScope.launch {
+            settingsDataStore.setVibrationEnabled(enabled)
+            recreateChannels()
+        }
     }
 
     fun setSoundEnabled(enabled: Boolean) {
         _isSoundEnabled.value = enabled
-        viewModelScope.launch { settingsDataStore.setSoundEnabled(enabled) }
+        viewModelScope.launch {
+            settingsDataStore.setSoundEnabled(enabled)
+            recreateChannels()
+        }
     }
 
     fun setNotificationSoundIndex(index: Int) {
         _notificationSoundIndex.value = index
-        viewModelScope.launch { settingsDataStore.setNotificationSoundIndex(index) }
+        viewModelScope.launch {
+            settingsDataStore.setNotificationSoundIndex(index)
+            recreateChannels()
+        }
     }
 
     fun setNotificationSoundUri(uri: String) {
         _notificationSoundUri.value = uri
-        viewModelScope.launch { settingsDataStore.setNotificationSoundUri(uri) }
+        viewModelScope.launch {
+            settingsDataStore.setNotificationSoundUri(uri)
+            recreateChannels()
+        }
     }
 
     fun setWaterReminderEnabled(enabled: Boolean) {
@@ -181,5 +194,9 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     fun setReminderStyle(style: String) {
         _reminderStyle.value = style
         viewModelScope.launch { settingsDataStore.setReminderStyle(style) }
+    }
+
+    private suspend fun recreateChannels() {
+        NotificationHelper.createChannels(getApplication())
     }
 }

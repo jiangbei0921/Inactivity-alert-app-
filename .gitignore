@@ -1,0 +1,35 @@
+# Built application files
+*.apk
+*.aar
+*.ap_
+*.aab
+
+# Java / Kotlin class files
+*.class
+*.dex
+
+# Generated files
+bin/
+gen/
+out/
+
+# Gradle cache (project-level)
+.gradle/
+build/
+
+# Local configuration (SDK path, keys, etc.)
+local.properties
+*.jks
+*.keystore
+
+# IDE / OS
+*.iml
+.idea/
+.DS_Store
+captures/
+.externalNativeBuild
+.cxx
+
+# Committed artifacts that should never be tracked
+gradle-8.5.zip
+build_output*.txt

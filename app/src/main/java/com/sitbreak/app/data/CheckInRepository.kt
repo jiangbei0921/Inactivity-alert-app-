@@ -10,7 +10,7 @@ class CheckInRepository(private val checkInDao: CheckInDao) {
     }
 
     suspend fun getTodayStandCount(startOfDay: Long, endOfDay: Long): Int {
-        return checkInDao.getTodayCountByType(startOfDay, endOfDay, "stand_up")
+        return checkInDao.getTodayCountByType(startOfDay, endOfDay, CheckInRecord.TYPE_STAND_UP)
     }
 
     suspend fun getTodayCount(startOfDay: Long, endOfDay: Long): Int {
@@ -29,15 +29,15 @@ class CheckInRepository(private val checkInDao: CheckInDao) {
         return checkInDao.getAllDistinctDays()
     }
 
-    suspend fun getAllDayCountsByType(type: String): List<CheckInDao.DailyCount> {
-        return checkInDao.getAllDayCountsByType(type)
+    suspend fun getAllDayCountsByType(type: String, tzOffset: Long): List<CheckInDao.DailyCount> {
+        return checkInDao.getAllDayCountsByType(type, tzOffset)
     }
 
-    suspend fun getDailyCountsForLast7Days(sevenDaysAgo: Long): List<CheckInDao.DailyCount> {
-        return checkInDao.getDailyCountsForLast7Days(sevenDaysAgo)
+    suspend fun getDailyCountsForLast7Days(sevenDaysAgo: Long, tzOffset: Long): List<CheckInDao.DailyCount> {
+        return checkInDao.getDailyCountsForLast7Days(sevenDaysAgo, tzOffset)
     }
 
-    suspend fun getMonthlyCountsForYear(yearStart: Long): List<CheckInDao.MonthlyCount> {
-        return checkInDao.getMonthlyCountsForYear(yearStart)
+    suspend fun getMonthlyCountsForYear(yearStart: Long, tzOffset: Long): List<CheckInDao.MonthlyCount> {
+        return checkInDao.getMonthlyCountsForYear(yearStart, tzOffset)
     }
 }

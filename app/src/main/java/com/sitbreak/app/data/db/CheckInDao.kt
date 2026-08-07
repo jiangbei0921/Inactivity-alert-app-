@@ -3,7 +3,6 @@ package com.sitbreak.app.data.db
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
-import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface CheckInDao {
@@ -13,9 +12,6 @@ interface CheckInDao {
 
     @Query("SELECT * FROM check_in_records WHERE timestamp >= :startOfDay AND timestamp < :endOfDay ORDER BY timestamp DESC")
     suspend fun getTodayRecords(startOfDay: Long, endOfDay: Long): List<CheckInRecord>
-
-    @Query("SELECT * FROM check_in_records WHERE timestamp >= :startOfDay AND timestamp < :endOfDay ORDER BY timestamp DESC")
-    fun getTodayRecordsFlow(startOfDay: Long, endOfDay: Long): Flow<List<CheckInRecord>>
 
     @Query(
         """
@@ -35,14 +31,14 @@ interface CheckInDao {
 
     @Query(
         """
-        SELECT (timestamp / 86400000) * 86400000 AS dayStart, COUNT(*) AS count 
-        FROM check_in_records 
-        WHERE timestamp >= :sevenDaysAgo 
-        GROUP BY dayStart 
+        SELECT ((timestamp + :tzOffset) / 86400000) * 86400000 - :tzOffset AS dayStart, COUNT(*) AS count
+        FROM check_in_records
+        WHERE timestamp >= :sevenDaysAgo
+        GROUP BY dayStart
         ORDER BY dayStart ASC
         """
     )
-    suspend fun getDailyCountsForLast7Days(sevenDaysAgo: Long): List<DailyCount>
+    suspend fun getDailyCountsForLast7Days(sevenDaysAgo: Long, tzOffset: Long): List<DailyCount>
 
     data class DailyCount(
         val dayStart: Long,
@@ -57,26 +53,26 @@ interface CheckInDao {
 
     @Query(
         """
-        SELECT (timestamp / 86400000) * 86400000 AS dayStart, COUNT(*) AS count 
-        FROM check_in_records 
+        SELECT ((timestamp + :tzOffset) / 86400000) * 86400000 - :tzOffset AS dayStart, COUNT(*) AS count
+        FROM check_in_records
         WHERE type = :type
-        GROUP BY dayStart 
+        GROUP BY dayStart
         ORDER BY dayStart ASC
         """
     )
-    suspend fun getAllDayCountsByType(type: String): List<DailyCount>
+    suspend fun getAllDayCountsByType(type: String, tzOffset: Long): List<DailyCount>
 
     @Query(
         """
-        SELECT CAST(strftime('%m', datetime(timestamp/1000, 'unixepoch')) AS INTEGER) AS month,
-        COUNT(*) AS count 
-        FROM check_in_records 
-        WHERE timestamp >= :yearStart 
-        GROUP BY month 
+        SELECT CAST(strftime('%m', datetime((timestamp + :tzOffset) / 1000, 'unixepoch')) AS INTEGER) AS month,
+        COUNT(*) AS count
+        FROM check_in_records
+        WHERE timestamp >= :yearStart
+        GROUP BY month
         ORDER BY month ASC
         """
     )
-    suspend fun getMonthlyCountsForYear(yearStart: Long): List<MonthlyCount>
+    suspend fun getMonthlyCountsForYear(yearStart: Long, tzOffset: Long): List<MonthlyCount>
 
     data class MonthlyCount(
         val month: Int,

@@ -1,6 +1,5 @@
 package com.sitbreak.app.service
 
-import android.app.ActivityManager
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
@@ -17,7 +16,6 @@ import com.sitbreak.app.data.db.AppDatabase
 import com.sitbreak.app.data.db.CheckInRecord
 import com.sitbreak.app.detector.SmartDetector
 import com.sitbreak.app.notification.NotificationHelper
-import com.sitbreak.app.ui.reminder.ReminderActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -30,7 +28,7 @@ import kotlinx.coroutines.launch
 
 class TimerService : Service() {
 
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var tickJob: Job? = null
     private var foregroundStarted = false
     private var sittingStartTime: Long = System.currentTimeMillis()
@@ -162,7 +160,23 @@ class TimerService : Service() {
         }
     }
 
+    private suspend fun refreshSettings() {
+        sittingIntervalMinutes = settingsDataStore.sittingIntervalMinutes.first()
+        microBreakIntervalMinutes = settingsDataStore.microBreakIntervalMinutes.first()
+        isMicroBreakEnabled = settingsDataStore.isMicroBreakEnabled.first()
+        isSoundEnabled = settingsDataStore.isSoundEnabled.first()
+        isVibrationEnabled = settingsDataStore.isVibrationEnabled.first()
+        workStartHour = settingsDataStore.workStartHour.first()
+        workEndHour = settingsDataStore.workEndHour.first()
+        isWeekendEnabled = settingsDataStore.isWeekendEnabled.first()
+        enabledDays = settingsDataStore.enabledDays.first()
+        isWaterReminderEnabled = settingsDataStore.isWaterReminderEnabled.first()
+        isEyeReminderEnabled = settingsDataStore.isEyeReminderEnabled.first()
+    }
+
     private suspend fun tick() {
+        refreshSettings()
+
         if (TimerStateHolder.getState() == TimerState.Paused) {
             updateServiceNotification(pausedElapsedMinutes)
             return
@@ -196,9 +210,6 @@ class TimerService : Service() {
                 sittingReminderSent = true
                 TimerStateHolder.setState(TimerState.Reminder)
                 NotificationHelper.sendSittingReminder(this, sittingElapsed.toInt(), isSoundEnabled, isVibrationEnabled)
-                if (!isAppInForeground()) {
-                    launchReminderActivity(sittingElapsed.toInt())
-                }
             }
         }
 
@@ -225,7 +236,7 @@ class TimerService : Service() {
 
         val record = CheckInRecord(
             timestamp = now,
-            type = "stand_up"
+            type = CheckInRecord.TYPE_STAND_UP
         )
         repository.insert(record)
 
@@ -321,27 +332,6 @@ class TimerService : Service() {
         TimerStateHolder.setState(TimerState.Running)
     }
 
-    private fun isAppInForeground(): Boolean {
-        val am = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-        val processes = am.runningAppProcesses ?: return false
-        for (process in processes) {
-            if (process.processName == packageName &&
-                process.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND
-            ) {
-                return true
-            }
-        }
-        return false
-    }
-
-    private fun launchReminderActivity(sittingMinutes: Int) {
-        val intent = Intent(this, ReminderActivity::class.java).apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            putExtra(ReminderActivity.EXTRA_SITTING_MINUTES, sittingMinutes)
-        }
-        startActivity(intent)
-    }
-
     private fun cancelReminderNotifications() {
         val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         manager.cancel(NotificationHelper.NOTIFICATION_ID_SITTING)
@@ -354,7 +344,7 @@ class TimerService : Service() {
         val todayStart = TimeUtils.getTodayStartMillis()
         val todayEnd = todayStart + 24 * 60 * 60 * 1000L
         val todayStandCount = try {
-            repository.getTodayCount(todayStart, todayEnd)
+            repository.getTodayStandCount(todayStart, todayEnd)
         } catch (_: Exception) {
             0
         }

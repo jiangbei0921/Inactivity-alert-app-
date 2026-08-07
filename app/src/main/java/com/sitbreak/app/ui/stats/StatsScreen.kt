@@ -32,6 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalDensity
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sitbreak.app.ui.components.StatCard
 import com.sitbreak.app.ui.theme.BlueLight
@@ -342,6 +343,22 @@ private fun BarChart(
 
     val maxY = data.maxOf { it.target.coerceAtLeast(1) }
 
+    val density = LocalDensity.current
+    val countPaint = remember(density) {
+        android.graphics.Paint().apply {
+            color = android.graphics.Color.parseColor("#2563EB")
+            textSize = with(density) { 10.sp.toPx() }
+            textAlign = android.graphics.Paint.Align.CENTER
+        }
+    }
+    val dayLabelPaint = remember(density) {
+        android.graphics.Paint().apply {
+            color = android.graphics.Color.parseColor("#6B7280")
+            textSize = with(density) { 11.sp.toPx() }
+            textAlign = android.graphics.Paint.Align.CENTER
+        }
+    }
+
     Canvas(modifier = modifier) {
         val barCount = data.size
         val barWidth = (size.width - 20.dp.toPx()) / barCount
@@ -349,17 +366,6 @@ private fun BarChart(
         val barActualWidth = barWidth - gap
         val chartHeight = size.height - 30.dp.toPx()
         val bottomY = chartHeight + 5.dp.toPx()
-
-        val countPaint = android.graphics.Paint().apply {
-            color = android.graphics.Color.parseColor("#2563EB")
-            textSize = 10.sp.toPx()
-            textAlign = android.graphics.Paint.Align.CENTER
-        }
-        val dayLabelPaint = android.graphics.Paint().apply {
-            color = android.graphics.Color.parseColor("#6B7280")
-            textSize = 11.sp.toPx()
-            textAlign = android.graphics.Paint.Align.CENTER
-        }
 
         data.forEachIndexed { index, item ->
             val barHeight = if (maxY > 0) {
@@ -407,6 +413,15 @@ private fun MonthlyBarChart(
 
     val maxY = data.maxOf { it.count.coerceAtLeast(1) }
 
+    val density = LocalDensity.current
+    val monthLabelPaint = remember(density) {
+        android.graphics.Paint().apply {
+            color = android.graphics.Color.parseColor("#6B7280")
+            textSize = with(density) { 10.sp.toPx() }
+            textAlign = android.graphics.Paint.Align.CENTER
+        }
+    }
+
     Canvas(modifier = modifier) {
         val barCount = data.size
         val barWidth = (size.width - 10.dp.toPx()) / barCount
@@ -414,12 +429,6 @@ private fun MonthlyBarChart(
         val barActualWidth = barWidth - gap
         val chartHeight = size.height - 30.dp.toPx()
         val bottomY = chartHeight + 5.dp.toPx()
-
-        val monthLabelPaint = android.graphics.Paint().apply {
-            color = android.graphics.Color.parseColor("#6B7280")
-            textSize = 10.sp.toPx()
-            textAlign = android.graphics.Paint.Align.CENTER
-        }
 
         data.forEachIndexed { index, item ->
             val barHeight = if (maxY > 0) {

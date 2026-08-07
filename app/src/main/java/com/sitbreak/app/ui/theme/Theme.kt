@@ -1,6 +1,8 @@
 package com.sitbreak.app.ui.theme
 
-import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
+import androidx.activity.ComponentActivity
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
@@ -52,6 +54,15 @@ private val DarkColorScheme = darkColorScheme(
     onErrorContainer = Color(0xFFFFDAD6),
 )
 
+private fun Context.findActivity(): ComponentActivity? {
+    var ctx = this
+    while (ctx is ContextWrapper) {
+        if (ctx is ComponentActivity) return ctx
+        ctx = ctx.baseContext
+    }
+    return null
+}
+
 @Composable
 fun SitBreakTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -63,7 +74,8 @@ fun SitBreakTheme(
     if (!view.isInEditMode) {
         val bgColor = colorScheme.background.toArgb()
         SideEffect {
-            val window = (view.context as Activity).window
+            val activity = view.context.findActivity() ?: return@SideEffect
+            val window = activity.window
             window.statusBarColor = bgColor
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
         }

@@ -44,6 +44,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.sitbreak.app.data.CheckInRepository
 import com.sitbreak.app.data.db.AppDatabase
 import com.sitbreak.app.data.db.CheckInRecord
 import com.sitbreak.app.ui.theme.BluePrimary
@@ -53,7 +54,6 @@ import com.sitbreak.app.ui.theme.TextPrimary
 import com.sitbreak.app.ui.theme.TextSecondary
 import com.sitbreak.app.ui.theme.TextTertiary
 import androidx.compose.runtime.rememberCoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Composable
@@ -276,14 +276,17 @@ fun ActivityDetailScreen(
                                                 remainingSeconds = 0
                                                 isRunning = false
                                                 isCompleted = true
-                                                coroutineScope.launch(Dispatchers.IO) {
+                                                coroutineScope.launch {
                                                     try {
-                                                        val db = AppDatabase.getInstance(context)
-                                                        val record = CheckInRecord(
-                                                            timestamp = System.currentTimeMillis(),
-                                                            type = "exercise",
+                                                        val repository = CheckInRepository(
+                                                            AppDatabase.getInstance(context).checkInDao()
                                                         )
-                                                        db.checkInDao().insert(record)
+                                                        repository.insert(
+                                                            CheckInRecord(
+                                                                timestamp = System.currentTimeMillis(),
+                                                                type = CheckInRecord.TYPE_EXERCISE,
+                                                            )
+                                                        )
                                                     } catch (_: Exception) {
                                                     }
                                                 }

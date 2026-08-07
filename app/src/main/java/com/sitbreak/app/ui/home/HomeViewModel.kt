@@ -135,7 +135,11 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             val interval = settingsDataStore.sittingIntervalMinutes.first()
             _targetSeconds.value = interval * 60
         }
-        refreshStats()
+        // 等服务侧异步写入打卡记录完成后再刷新，避免站立次数延迟一次
+        viewModelScope.launch {
+            delay(600L)
+            refreshStats()
+        }
     }
 
     fun onSnooze() {

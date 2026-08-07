@@ -1,9 +1,12 @@
-name: Android Build (assembleDebug)
+name: Android Build & Publish APK
 
 on:
   push:
     branches: [ main ]
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -26,7 +29,7 @@ jobs:
           yes | sdkmanager --licenses
           sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
 
-      - name: Set up Gradle 8.5 (no wrapper script needed)
+      - name: Set up Gradle 8.5
         uses: gradle/actions/setup-gradle@v3
         with:
           gradle-version: '8.5'
@@ -34,9 +37,23 @@ jobs:
       - name: Build debug APK
         run: gradle assembleDebug --stacktrace
 
-      - name: Upload APK
-        if: success()
-        uses: actions/upload-artifact@v4
+      - name: Locate APK
+        id: apk
+        run: echo "path=$(ls app/build/outputs/apk/debug/*.apk)" >> "$GITHUB_OUTPUT"
+
+      - name: Remove previous latest release & tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release delete latest -y || true
+          git push origin :refs/tags/latest || true
+
+      - name: Publish APK to latest release
+        uses: softprops/action-gh-release@v2
         with:
-          name: app-debug
-          path: app/build/outputs/apk/debug/*.apk
+          tag_name: latest
+          name: Latest Debug APK
+          prerelease: true
+          files: ${{ steps.apk.outputs.path }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

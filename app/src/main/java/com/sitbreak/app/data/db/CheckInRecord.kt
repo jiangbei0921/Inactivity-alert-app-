@@ -15,5 +15,10 @@ data class CheckInRecord(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
     val timestamp: Long = System.currentTimeMillis(),
-    val type: String = "stand_up"
-)
+    val type: String = TYPE_STAND_UP
+) {
+    companion object {
+        const val TYPE_STAND_UP = "stand_up"
+        const val TYPE_EXERCISE = "exercise"
+    }
+}
