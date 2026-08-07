@@ -5,11 +5,13 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.media.AudioAttributes
 import android.media.RingtoneManager
 import android.net.Uri
 import androidx.core.app.NotificationCompat
 import com.sitbreak.app.TimerState
 import com.sitbreak.app.data.NotificationSettingsDataStore
+import com.sitbreak.app.data.SettingsDataStore
 import kotlinx.coroutines.flow.first
 
 object NotificationHelper {
@@ -32,8 +34,16 @@ object NotificationHelper {
 
     private const val GROUP_KEY_REMINDERS = "sitbreak_reminders"
 
-    fun createChannels(context: Context) {
+    suspend fun createChannels(context: Context) {
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val settings = SettingsDataStore(context)
+        val isSoundEnabled = settings.isSoundEnabled.first()
+        val isVibrationEnabled = settings.isVibrationEnabled.first()
+        val soundUri = if (isSoundEnabled) resolveNotificationSoundUri(context) else null
+        val audioAttributes = AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .build()
 
         val sittingChannel = NotificationChannel(
             CHANNEL_SITTING_REMINDER,
@@ -41,8 +51,8 @@ object NotificationHelper {
             NotificationManager.IMPORTANCE_HIGH
         ).apply {
             description = "提醒您站起来活动一下"
-            enableVibration(true)
-            setSound(null, null)
+            enableVibration(isVibrationEnabled)
+            setSound(if (isSoundEnabled) soundUri else null, audioAttributes)
         }
 
         val microBreakChannel = NotificationChannel(
@@ -51,8 +61,8 @@ object NotificationHelper {
             NotificationManager.IMPORTANCE_DEFAULT
         ).apply {
             description = "提醒您短暂休息片刻"
-            enableVibration(true)
-            setSound(null, null)
+            enableVibration(isVibrationEnabled)
+            setSound(if (isSoundEnabled) soundUri else null, audioAttributes)
         }
 
         val serviceChannel = NotificationChannel(
@@ -271,13 +281,6 @@ object NotificationHelper {
         }
 
         return RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-    }
-
-    private suspend fun getSittingReminderText(context: Context, sittingMinutes: Int): String {
-        val dataStore = NotificationSettingsDataStore(context)
-        val style = dataStore.reminderStyle.first()
-        val copy = ReminderCopywriter.randomCopy(style)
-        return "$copy（已坐 ${sittingMinutes} 分钟）"
     }
 
     suspend fun sendWaterReminder(context: Context, soundEnabled: Boolean = true, vibrationEnabled: Boolean = true) {

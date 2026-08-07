@@ -81,6 +81,8 @@ import com.sitbreak.app.ui.theme.TextSecondary
 import com.sitbreak.app.ui.theme.TextTertiary
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.compose.ui.res.stringResource
+import com.sitbreak.app.R
 
 private val INTERVAL_OPTIONS = listOf(10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 75, 90)
 private val MICRO_BREAK_OPTIONS = listOf(5, 10, 15, 20, 25, 30)
