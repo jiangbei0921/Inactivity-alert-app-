@@ -1,0 +1,38 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "安装到手机",
+            "type": "shell",
+            "command": ".\\gradlew.bat installDebug --offline",
+            "options": {
+                "env": {
+                    "JAVA_HOME": "C:\\Program Files\\Android\\Android Studio\\jbr",
+                    "ANDROID_HOME": "C:\\Users\\ZBZ20\\AppData\\Local\\Android\\Sdk"
+                }
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            }
+        },
+        {
+            "label": "仅编译（不装手机）",
+            "type": "shell",
+            "command": ".\\gradlew.bat assembleDebug --offline",
+            "options": {
+                "env": {
+                    "JAVA_HOME": "C:\\Program Files\\Android\\Android Studio\\jbr",
+                    "ANDROID_HOME": "C:\\Users\\ZBZ20\\AppData\\Local\\Android\\Sdk"
+                }
+            },
+            "group": "build",
+            "problemMatcher": []
+        }
+    ]
+}

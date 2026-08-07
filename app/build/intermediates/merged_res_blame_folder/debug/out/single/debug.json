@@ -1,0 +1,18 @@
+[
+    {
+        "merged": "com.sitbreak.app-merged_res-67:/drawable_ic_launcher_foreground.xml.flat",
+        "source": "com.sitbreak.app-main-69:/drawable/ic_launcher_foreground.xml"
+    },
+    {
+        "merged": "com.sitbreak.app-merged_res-67:/mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "com.sitbreak.app-main-69:/mipmap-anydpi-v26/ic_launcher.xml"
+    },
+    {
+        "merged": "com.sitbreak.app-merged_res-67:/xml_sit_break_widget_info.xml.flat",
+        "source": "com.sitbreak.app-main-69:/xml/sit_break_widget_info.xml"
+    },
+    {
+        "merged": "com.sitbreak.app-merged_res-67:/drawable_ic_launcher_background.xml.flat",
+        "source": "com.sitbreak.app-main-69:/drawable/ic_launcher_background.xml"
+    }
+]
