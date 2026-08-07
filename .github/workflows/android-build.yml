@@ -41,12 +41,29 @@ jobs:
         id: apk
         run: echo "path=$(ls app/build/outputs/apk/debug/*.apk)" >> "$GITHUB_OUTPUT"
 
-      - name: Remove previous latest release & tag
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release delete latest -y || true
-          git push origin :refs/tags/latest || true
+      - name: Delete previous latest release & tag (if any)
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const tag = 'latest';
+            try {
+              const releases = await github.rest.repos.listReleases({
+                owner: context.repo.owner, repo: context.repo.repo
+              });
+              const rel = releases.data.find(r => r.tag_name === tag);
+              if (rel) {
+                await github.rest.repos.deleteRelease({
+                  owner: context.repo.owner, repo: context.repo.repo, release_id: rel.id
+                });
+                console.log('Deleted existing release', rel.id);
+              }
+            } catch (e) { console.log('No release to delete:', e.message); }
+            try {
+              await github.rest.git.deleteRef({
+                owner: context.repo.owner, repo: context.repo.repo, ref: 'tags/' + tag
+              });
+              console.log('Deleted existing tag', tag);
+            } catch (e) { console.log('No tag to delete:', e.message); }
 
       - name: Publish APK to latest release
         uses: softprops/action-gh-release@v2
