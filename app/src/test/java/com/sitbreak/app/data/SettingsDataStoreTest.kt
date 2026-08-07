@@ -5,8 +5,8 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-import com.sitbreak.app.TimerSettingsDataStore
-import com.sitbreak.app.ReminderSettingsDataStore
+import com.sitbreak.app.data.TimerSettingsDataStore
+import com.sitbreak.app.data.ReminderSettingsDataStore
 
 class SettingsDataStoreTest {
 
