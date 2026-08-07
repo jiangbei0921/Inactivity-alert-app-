@@ -3,8 +3,8 @@ package com.sitbreak.app.widget
 import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.Sp
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.appwidget.GlanceAppWidget
@@ -63,7 +63,7 @@ class SitBreakWidget : GlanceAppWidget() {
             modifier = GlanceModifier
                 .fillMaxSize()
                 .background(ColorProvider(Color.White))
-                .padding(Dp(12f)),
+                .padding(12.dp),
             contentAlignment = Alignment.Center
         ) {
             Column(
@@ -73,7 +73,7 @@ class SitBreakWidget : GlanceAppWidget() {
                     text = "站一站",
                     style = TextStyle(
                         color = ColorProvider(Color(0xFF2563EB)),
-                        fontSize = Sp(14f),
+                        fontSize = 14.sp,
                         fontWeight = FontWeight.Bold
                     )
                 )
@@ -81,14 +81,14 @@ class SitBreakWidget : GlanceAppWidget() {
                     text = "今日站立 $standCount 次",
                     style = TextStyle(
                         color = ColorProvider(Color(0xFF6B7280)),
-                        fontSize = Sp(12f)
+                        fontSize = 12.sp
                     )
                 )
                 Text(
                     text = "下次提醒约 $intervalMinutes 分钟后",
                     style = TextStyle(
                         color = ColorProvider(Color(0xFF9CA3AF)),
-                        fontSize = Sp(11f)
+                        fontSize = 11.sp
                     )
                 )
             }

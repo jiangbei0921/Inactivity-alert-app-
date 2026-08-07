@@ -350,19 +350,15 @@ private fun BarChart(
         val chartHeight = size.height - 30.dp.toPx()
         val bottomY = chartHeight + 5.dp.toPx()
 
-        val countPaint = remember {
-            android.graphics.Paint().apply {
-                color = android.graphics.Color.parseColor("#2563EB")
-                textSize = 10.sp.toPx()
-                textAlign = android.graphics.Paint.Align.CENTER
-            }
+        val countPaint = android.graphics.Paint().apply {
+            color = android.graphics.Color.parseColor("#2563EB")
+            textSize = 10.sp.toPx()
+            textAlign = android.graphics.Paint.Align.CENTER
         }
-        val dayLabelPaint = remember {
-            android.graphics.Paint().apply {
-                color = android.graphics.Color.parseColor("#6B7280")
-                textSize = 11.sp.toPx()
-                textAlign = android.graphics.Paint.Align.CENTER
-            }
+        val dayLabelPaint = android.graphics.Paint().apply {
+            color = android.graphics.Color.parseColor("#6B7280")
+            textSize = 11.sp.toPx()
+            textAlign = android.graphics.Paint.Align.CENTER
         }
 
         data.forEachIndexed { index, item ->
@@ -419,12 +415,10 @@ private fun MonthlyBarChart(
         val chartHeight = size.height - 30.dp.toPx()
         val bottomY = chartHeight + 5.dp.toPx()
 
-        val monthLabelPaint = remember {
-            android.graphics.Paint().apply {
-                color = android.graphics.Color.parseColor("#6B7280")
-                textSize = 10.sp.toPx()
-                textAlign = android.graphics.Paint.Align.CENTER
-            }
+        val monthLabelPaint = android.graphics.Paint().apply {
+            color = android.graphics.Color.parseColor("#6B7280")
+            textSize = 10.sp.toPx()
+            textAlign = android.graphics.Paint.Align.CENTER
         }
 
         data.forEachIndexed { index, item ->

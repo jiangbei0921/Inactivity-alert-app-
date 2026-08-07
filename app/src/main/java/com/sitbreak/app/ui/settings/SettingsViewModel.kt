@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.launch
 
 class SettingsViewModel(application: Application) : AndroidViewModel(application) {
@@ -63,46 +64,46 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     private fun loadSettings() {
         viewModelScope.launch {
-            settingsDataStore.sittingIntervalMinutes.onEach { _sittingIntervalMinutes.value = it }.catch {}.collect()
+            settingsDataStore.sittingIntervalMinutes.onEach { _sittingIntervalMinutes.value = it }.catch {}.launchIn(viewModelScope)
         }
         viewModelScope.launch {
-            settingsDataStore.microBreakIntervalMinutes.onEach { _microBreakIntervalMinutes.value = it }.catch {}.collect()
+            settingsDataStore.microBreakIntervalMinutes.onEach { _microBreakIntervalMinutes.value = it }.catch {}.launchIn(viewModelScope)
         }
         viewModelScope.launch {
-            settingsDataStore.isMicroBreakEnabled.onEach { _isMicroBreakEnabled.value = it }.catch {}.collect()
+            settingsDataStore.isMicroBreakEnabled.onEach { _isMicroBreakEnabled.value = it }.catch {}.launchIn(viewModelScope)
         }
         viewModelScope.launch {
-            settingsDataStore.workStartHour.onEach { _workStartHour.value = it }.catch {}.collect()
+            settingsDataStore.workStartHour.onEach { _workStartHour.value = it }.catch {}.launchIn(viewModelScope)
         }
         viewModelScope.launch {
-            settingsDataStore.workEndHour.onEach { _workEndHour.value = it }.catch {}.collect()
+            settingsDataStore.workEndHour.onEach { _workEndHour.value = it }.catch {}.launchIn(viewModelScope)
         }
         viewModelScope.launch {
-            settingsDataStore.isWeekendEnabled.onEach { _isWeekendEnabled.value = it }.catch {}.collect()
+            settingsDataStore.isWeekendEnabled.onEach { _isWeekendEnabled.value = it }.catch {}.launchIn(viewModelScope)
         }
         viewModelScope.launch {
-            settingsDataStore.enabledDays.onEach { _enabledDays.value = it }.catch {}.collect()
+            settingsDataStore.enabledDays.onEach { _enabledDays.value = it }.catch {}.launchIn(viewModelScope)
         }
         viewModelScope.launch {
-            settingsDataStore.isVibrationEnabled.onEach { _isVibrationEnabled.value = it }.catch {}.collect()
+            settingsDataStore.isVibrationEnabled.onEach { _isVibrationEnabled.value = it }.catch {}.launchIn(viewModelScope)
         }
         viewModelScope.launch {
-            settingsDataStore.isSoundEnabled.onEach { _isSoundEnabled.value = it }.catch {}.collect()
+            settingsDataStore.isSoundEnabled.onEach { _isSoundEnabled.value = it }.catch {}.launchIn(viewModelScope)
         }
         viewModelScope.launch {
-            settingsDataStore.notificationSoundIndex.onEach { _notificationSoundIndex.value = it }.catch {}.collect()
+            settingsDataStore.notificationSoundIndex.onEach { _notificationSoundIndex.value = it }.catch {}.launchIn(viewModelScope)
         }
         viewModelScope.launch {
-            settingsDataStore.notificationSoundUri.onEach { _notificationSoundUri.value = it }.catch {}.collect()
+            settingsDataStore.notificationSoundUri.onEach { _notificationSoundUri.value = it }.catch {}.launchIn(viewModelScope)
         }
         viewModelScope.launch {
-            settingsDataStore.isWaterReminderEnabled.onEach { _isWaterReminderEnabled.value = it }.catch {}.collect()
+            settingsDataStore.isWaterReminderEnabled.onEach { _isWaterReminderEnabled.value = it }.catch {}.launchIn(viewModelScope)
         }
         viewModelScope.launch {
-            settingsDataStore.isEyeReminderEnabled.onEach { _isEyeReminderEnabled.value = it }.catch {}.collect()
+            settingsDataStore.isEyeReminderEnabled.onEach { _isEyeReminderEnabled.value = it }.catch {}.launchIn(viewModelScope)
         }
         viewModelScope.launch {
-            settingsDataStore.reminderStyle.onEach { _reminderStyle.value = it }.catch {}.collect()
+            settingsDataStore.reminderStyle.onEach { _reminderStyle.value = it }.catch {}.launchIn(viewModelScope)
         }
     }
 

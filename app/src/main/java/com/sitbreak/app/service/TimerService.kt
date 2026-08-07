@@ -15,6 +15,7 @@ import com.sitbreak.app.data.CheckInRepository
 import com.sitbreak.app.data.SettingsDataStore
 import com.sitbreak.app.data.db.AppDatabase
 import com.sitbreak.app.data.db.CheckInRecord
+import com.sitbreak.app.detector.SmartDetector
 import com.sitbreak.app.notification.NotificationHelper
 import com.sitbreak.app.ui.reminder.ReminderActivity
 import kotlinx.coroutines.CoroutineScope
@@ -23,7 +24,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.first
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
