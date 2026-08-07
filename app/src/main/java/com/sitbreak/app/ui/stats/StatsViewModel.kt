@@ -60,7 +60,7 @@ class StatsViewModel(application: Application) : AndroidViewModel(application) {
             _dailyTarget.value = target
 
             val sevenDaysAgo = getSevenDaysAgo()
-            val counts = checkInDao.getDailyCountsForLast7Days(sevenDaysAgo)
+            val counts = repository.getDailyCountsForLast7Days(sevenDaysAgo)
 
             val barDataList = buildBarDataList(counts, target)
             _dailyCounts.value = barDataList
@@ -70,7 +70,7 @@ class StatsViewModel(application: Application) : AndroidViewModel(application) {
                 sum.toFloat() / barDataList.size / target.coerceAtLeast(1)
             } else 0f
 
-            _totalCheckIns.value = checkInDao.getTotalCount()
+            _totalCheckIns.value = repository.getTotalCount()
 
             _longestStreak.value = calculateLongestStreak(target)
         }
@@ -78,10 +78,8 @@ class StatsViewModel(application: Application) : AndroidViewModel(application) {
 
     private suspend fun calculateLongestStreak(target: Int): Int {
         if (target <= 0) return 0
-        val allDayCounts = checkInDao.getAllDayCountsByType("stand_up")
+        val allDayCounts = repository.getAllDayCountsByType("stand_up")
         if (allDayCounts.isEmpty()) return 0
-
-        val countMap = allDayCounts.associate { it.dayStart to it.count }
 
         var maxStreak = 0
         var currentStreak = 0
@@ -182,7 +180,7 @@ class StatsViewModel(application: Application) : AndroidViewModel(application) {
             _dailyTarget.value = target
 
             val sevenDaysAgo = getSevenDaysAgo()
-            val counts = checkInDao.getDailyCountsForLast7Days(sevenDaysAgo)
+            val counts = repository.getDailyCountsForLast7Days(sevenDaysAgo)
 
             val barDataList = buildBarDataList(counts, target)
             _dailyCounts.value = barDataList
@@ -192,7 +190,7 @@ class StatsViewModel(application: Application) : AndroidViewModel(application) {
                 sum.toFloat() / barDataList.size / target.coerceAtLeast(1)
             } else 0f
 
-            _totalCheckIns.value = checkInDao.getTotalCount()
+            _totalCheckIns.value = repository.getTotalCount()
 
             _longestStreak.value = calculateLongestStreak(target)
         }
@@ -200,7 +198,7 @@ class StatsViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun loadMonthlyStats() {
         viewModelScope.launch {
-            _totalCheckIns.value = checkInDao.getTotalCount()
+            _totalCheckIns.value = repository.getTotalCount()
         }
     }
 
@@ -217,9 +215,11 @@ class StatsViewModel(application: Application) : AndroidViewModel(application) {
             calendar.set(Calendar.DAY_OF_MONTH, 1)
             calendar.set(Calendar.HOUR_OF_DAY, 0)
             calendar.set(Calendar.MINUTE, 0)
+            calendar.set(Calendar.SECOND, 0)
+            calendar.set(Calendar.MILLISECOND, 0)
             val yearStart = calendar.timeInMillis
 
-            val counts = checkInDao.getMonthlyCountsForYear(yearStart)
+            val counts = repository.getMonthlyCountsForYear(yearStart)
 
             val barDataList = mutableListOf<MonthlyBarData>()
             var totalCompleted = 0
@@ -230,12 +230,12 @@ class StatsViewModel(application: Application) : AndroidViewModel(application) {
             for (month in 1..12) {
                 val found = counts.find { it.month == month }
                 val count = found?.count ?: 0
-                val workingDays = if (month in 1..12) 22 else 0
+                val workingDays = 22
                 val target = workingDays * dailyTarget
 
                 barDataList.add(MonthlyBarData("$month", count, target))
 
-                if (count >= target * 0.8f) {
+                if (target > 0 && count >= target * 0.8f) {
                     totalCompleted++
                 }
                 totalPossible++
@@ -250,16 +250,5 @@ class StatsViewModel(application: Application) : AndroidViewModel(application) {
             _yearlyCompletionRate.value = if (totalPossible > 0) totalCompleted.toFloat() / totalPossible else 0f
             _bestMonth.value = "$bestMonth 月，共站立 $maxCount 次"
         }
-    }
-
-    private fun getYearStart(): Long {
-        val calendar = Calendar.getInstance()
-        calendar.set(Calendar.MONTH, Calendar.JANUARY)
-        calendar.set(Calendar.DAY_OF_MONTH, 1)
-        calendar.set(Calendar.HOUR_OF_DAY, 0)
-        calendar.set(Calendar.MINUTE, 0)
-        calendar.set(Calendar.SECOND, 0)
-        calendar.set(Calendar.MILLISECOND, 0)
-        return calendar.timeInMillis
     }
 }
