@@ -6,6 +6,7 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.os.IBinder
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.sitbreak.app.MainActivity
 import com.sitbreak.app.TimerState
@@ -51,6 +52,7 @@ class TimerService : Service() {
     private var pauseStartTime: Long = 0L
     private var pausedElapsedMinutes: Int = 0
     private var autoPaused: Boolean = false
+    private var cachedStandCount: Int = 0
 
     private lateinit var settingsDataStore: SettingsDataStore
     private lateinit var repository: CheckInRepository
@@ -152,11 +154,23 @@ class TimerService : Service() {
             microBreakReminderSent = false
 
             TimerStateHolder.setState(TimerState.Running)
+            refreshStandCount()
 
             while (isActive) {
                 tick()
                 delay(TICK_INTERVAL_MS)
             }
+        }
+    }
+
+    private suspend fun refreshStandCount() {
+        val todayStart = TimeUtils.getTodayStartMillis()
+        val todayEnd = todayStart + 24 * 60 * 60 * 1000L
+        cachedStandCount = try {
+            repository.getTodayStandCount(todayStart, todayEnd)
+        } catch (e: Exception) {
+            Log.e(TAG, "refreshStandCount failed", e)
+            0
         }
     }
 
@@ -252,6 +266,7 @@ class TimerService : Service() {
         settingsDataStore.setMicroBreakStartTime(0L)
 
         cancelReminderNotifications()
+        refreshStandCount()
 
         tickJob?.cancel()
         stopSelf()
@@ -341,13 +356,7 @@ class TimerService : Service() {
     }
 
     private suspend fun updateServiceNotification(elapsedMinutes: Int) {
-        val todayStart = TimeUtils.getTodayStartMillis()
-        val todayEnd = todayStart + 24 * 60 * 60 * 1000L
-        val todayStandCount = try {
-            repository.getTodayStandCount(todayStart, todayEnd)
-        } catch (_: Exception) {
-            0
-        }
+        val todayStandCount = cachedStandCount
         val nextReminder = if (sittingIntervalMinutes > elapsedMinutes) {
             sittingIntervalMinutes - elapsedMinutes
         } else {
@@ -374,6 +383,7 @@ class TimerService : Service() {
     }
 
     companion object {
+        private const val TAG = "TimerService"
         private const val TICK_INTERVAL_MS = 15_000L
         private const val WATER_REMINDER_INTERVAL_MIN = 90
         private const val EYE_REMINDER_INTERVAL_MIN = 20

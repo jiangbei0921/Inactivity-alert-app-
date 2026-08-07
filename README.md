@@ -37,9 +37,9 @@
 
 不想自己编译，可直接下载由 CI 自动构建的最新安装包：
 
-- **最新版 APK（持续更新）**：[app-debug.apk](https://github.com/jiangbei0921/Inactivity-alert-app-/releases/latest/download/app-debug.apk)
+- **最新版 APK（持续更新）**：[app-debug.apk](https://github.com/jiangbei0921/Inactivity-alert-app-/releases/download/latest/app-debug.apk)
 
-> 该链接指向仓库 `latest` 发布中的 `app-debug.apk`。每次向 `main` 分支推送代码，GitHub Actions 都会自动重新构建并把最新的 APK 更新到这个发布，因此拿到的始终是最新版本。
+> 该链接指向仓库 `latest` 标签发布中的 `app-debug.apk`（直接基于发布标签，链接长期稳定可用，不受预发布标识影响）。每次向 `main` 分支推送代码，GitHub Actions 都会自动重新构建并把最新的 APK 更新到这个发布，因此拿到的始终是最新版本。
 
 ### 安装步骤
 1. 在手机浏览器中点击上面的链接，下载 `app-debug.apk`。

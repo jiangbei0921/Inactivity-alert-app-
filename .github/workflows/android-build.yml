@@ -70,7 +70,7 @@ jobs:
         with:
           tag_name: latest
           name: Latest Debug APK
-          prerelease: true
+          prerelease: false
           files: ${{ steps.apk.outputs.path }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
