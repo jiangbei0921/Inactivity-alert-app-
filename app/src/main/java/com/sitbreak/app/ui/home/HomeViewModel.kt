@@ -124,7 +124,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun onStandUp() {
-        TimerService.onStandUp()
+        TimerService.onStandUp(getApplication())
         _elapsedSeconds.value = 0
         TimerStateHolder.setState(TimerState.Completed)
         viewModelScope.launch {
@@ -139,7 +139,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun onSnooze() {
-        TimerService.onSnooze()
+        TimerService.onSnooze(getApplication())
         _elapsedSeconds.value = 0
         TimerStateHolder.setState(TimerState.Running)
         viewModelScope.launch {
@@ -149,17 +149,17 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun onPause() {
-        TimerService.onPause()
+        TimerService.onPause(getApplication())
         TimerStateHolder.setState(TimerState.Paused)
     }
 
     fun onResume() {
-        TimerService.onResume()
+        TimerService.onResume(getApplication())
         TimerStateHolder.setState(TimerState.Running)
     }
 
     fun onStop() {
-        TimerService.onStop()
+        TimerService.onStop(getApplication())
         _elapsedSeconds.value = 0
         TimerStateHolder.setState(TimerState.Idle)
         refreshStats()

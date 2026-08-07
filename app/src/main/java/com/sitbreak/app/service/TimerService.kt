@@ -1,9 +1,9 @@
 package com.sitbreak.app.service
 
 import android.app.ActivityManager
+import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
-import com.sitbreak.app.detector.SmartDetector
 import android.content.Context
 import android.content.Intent
 import android.os.IBinder
@@ -14,16 +14,16 @@ import com.sitbreak.app.TimerStateHolder
 import com.sitbreak.app.data.CheckInRepository
 import com.sitbreak.app.data.SettingsDataStore
 import com.sitbreak.app.data.db.AppDatabase
+import com.sitbreak.app.data.db.CheckInRecord
+import com.sitbreak.app.detector.SmartDetector
 import com.sitbreak.app.notification.NotificationHelper
 import com.sitbreak.app.ui.reminder.ReminderActivity
-import com.sitbreak.app.widget.SitBreakWidget
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -32,6 +32,7 @@ class TimerService : Service() {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var tickJob: Job? = null
+    private var foregroundStarted = false
     private var sittingStartTime: Long = System.currentTimeMillis()
     private var microBreakStartTime: Long = System.currentTimeMillis()
     private var sittingIntervalMinutes: Int = 45
@@ -45,13 +46,13 @@ class TimerService : Service() {
     private var enabledDays: Set<String> = setOf("MON", "TUE", "WED", "THU", "FRI")
     private var sittingReminderSent: Boolean = false
     private var microBreakReminderSent: Boolean = false
-    private var waterReminderSent: Boolean = false
-    private var eyeReminderSent: Boolean = false
     private var waterReminderStartTime: Long = 0L
     private var eyeReminderStartTime: Long = 0L
     private var isWaterReminderEnabled: Boolean = true
     private var isEyeReminderEnabled: Boolean = true
     private var pauseStartTime: Long = 0L
+    private var pausedElapsedMinutes: Int = 0
+    private var autoPaused: Boolean = false
 
     private lateinit var settingsDataStore: SettingsDataStore
     private lateinit var repository: CheckInRepository
@@ -60,14 +61,17 @@ class TimerService : Service() {
         super.onCreate()
         settingsDataStore = SettingsDataStore(this)
         repository = CheckInRepository(AppDatabase.getInstance(this).checkInDao())
-        NotificationHelper.createChannels(this)
-        observeActions()
+        scope.launch { NotificationHelper.createChannels(this@TimerService) }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_START -> startTimer()
-            ACTION_STOP -> stopSelf()
+            NotificationHelper.ACTION_STAND_UP -> dispatch { handleStandUp() }
+            NotificationHelper.ACTION_SNOOZE -> dispatch { handleSnooze() }
+            NotificationHelper.ACTION_PAUSE_TIMER -> dispatch { handlePause() }
+            NotificationHelper.ACTION_RESUME_TIMER -> dispatch { handleResume() }
+            NotificationHelper.ACTION_STOP_TIMER -> dispatch { handleStop() }
             else -> startTimer()
         }
         return START_NOT_STICKY
@@ -106,6 +110,18 @@ class TimerService : Service() {
             .build()
 
         startForeground(NotificationHelper.NOTIFICATION_ID_SERVICE, notification)
+        foregroundStarted = true
+    }
+
+    private fun ensureForegroundStarted() {
+        if (!foregroundStarted) {
+            startForeground()
+        }
+    }
+
+    private fun dispatch(block: suspend () -> Unit) {
+        ensureForegroundStarted()
+        scope.launch { block() }
     }
 
     private fun loadSettingsAndStartTicking() {
@@ -125,7 +141,7 @@ class TimerService : Service() {
             isWaterReminderEnabled = settingsDataStore.isWaterReminderEnabled.first()
             isEyeReminderEnabled = settingsDataStore.isEyeReminderEnabled.first()
 
-                 if (sittingStartTime <= 0L) {
+            if (sittingStartTime <= 0L) {
                 waterReminderStartTime = 0L
                 eyeReminderStartTime = 0L
                 return@launch
@@ -136,44 +152,28 @@ class TimerService : Service() {
 
             sittingReminderSent = false
             microBreakReminderSent = false
-            waterReminderSent = false
-            eyeReminderSent = false
 
             TimerStateHolder.setState(TimerState.Running)
 
             while (isActive) {
                 tick()
-                delay(15_000L)
-            }
-        }
-    }
-
-    private fun observeActions() {
-        scope.launch {
-            actionFlow.collect { action ->
-                when (action) {
-                    ServiceAction.STAND_UP -> handleStandUp()
-                    ServiceAction.SNOOZE -> handleSnooze()
-                    ServiceAction.PAUSE_TIMER -> handlePause()
-                    ServiceAction.RESUME_TIMER -> handleResume()
-                    ServiceAction.STOP_TIMER -> handleStop()
-                }
+                delay(TICK_INTERVAL_MS)
             }
         }
     }
 
     private suspend fun tick() {
         if (TimerStateHolder.getState() == TimerState.Paused) {
-            val pausedElapsed = ((System.currentTimeMillis() - sittingStartTime) / 60_000).toInt()
-            updateServiceNotification(pausedElapsed)
+            updateServiceNotification(pausedElapsedMinutes)
             return
         }
 
         if (!TimeUtils.isInWorkingHours(workStartHour, workEndHour, enabledDays, isWeekendEnabled)) {
             if (TimerStateHolder.getState() == TimerState.Running) {
+                autoPaused = true
                 pauseTimer()
             }
-            updateServiceNotification(0)
+            updateServiceNotification(pausedElapsedMinutes)
             return
         }
 
@@ -195,10 +195,8 @@ class TimerService : Service() {
             } else {
                 sittingReminderSent = true
                 TimerStateHolder.setState(TimerState.Reminder)
-                if (isAppInForeground()) {
-                    NotificationHelper.sendSittingReminder(this, sittingElapsed.toInt(), isSoundEnabled, isVibrationEnabled)
-                } else {
-                    NotificationHelper.sendSittingReminder(this, sittingElapsed.toInt(), isSoundEnabled, isVibrationEnabled)
+                NotificationHelper.sendSittingReminder(this, sittingElapsed.toInt(), isSoundEnabled, isVibrationEnabled)
+                if (!isAppInForeground()) {
                     launchReminderActivity(sittingElapsed.toInt())
                 }
             }
@@ -210,15 +208,15 @@ class TimerService : Service() {
         }
 
         val waterElapsed = (now - waterReminderStartTime) / 60_000
-        if (isWaterReminderEnabled && !waterReminderSent && waterElapsed >= 90) {
-            waterReminderSent = true
+        if (isWaterReminderEnabled && waterElapsed >= WATER_REMINDER_INTERVAL_MIN) {
             NotificationHelper.sendWaterReminder(this, isSoundEnabled, isVibrationEnabled)
+            waterReminderStartTime = now
         }
 
         val eyeElapsed = (now - eyeReminderStartTime) / 60_000
-        if (isEyeReminderEnabled && !eyeReminderSent && eyeElapsed >= 20) {
-            eyeReminderSent = true
+        if (isEyeReminderEnabled && eyeElapsed >= EYE_REMINDER_INTERVAL_MIN) {
             NotificationHelper.sendEyeReminder(this, isSoundEnabled, isVibrationEnabled)
+            eyeReminderStartTime = now
         }
     }
 
@@ -237,37 +235,49 @@ class TimerService : Service() {
         microBreakStartTime = 0L
         sittingReminderSent = false
         microBreakReminderSent = false
+        autoPaused = false
+        pauseStartTime = 0L
         settingsDataStore.setSittingStartTime(0L)
         settingsDataStore.setMicroBreakStartTime(0L)
+
+        cancelReminderNotifications()
 
         tickJob?.cancel()
         stopSelf()
     }
 
     private suspend fun handleSnooze() {
-        val snoozeMillis = 5 * 60 * 1000L
-        sittingStartTime = sittingStartTime + snoozeMillis
+        sittingStartTime = sittingStartTime + SNOOZE_DURATION_MS
         sittingReminderSent = false
         TimerStateHolder.setState(TimerState.Running)
         settingsDataStore.setSittingStartTime(sittingStartTime)
     }
 
     private suspend fun handlePause() {
+        pausedElapsedMinutes = ((System.currentTimeMillis() - sittingStartTime) / 60_000).toInt().coerceAtLeast(0)
         pauseStartTime = System.currentTimeMillis()
+        autoPaused = false
         TimerStateHolder.setState(TimerState.Paused)
     }
 
     private suspend fun handleResume() {
-        if (pauseStartTime > 0L) {
-            val pausedDuration = System.currentTimeMillis() - pauseStartTime
+        val now = System.currentTimeMillis()
+        if (autoPaused) {
+            sittingStartTime = now
+            microBreakStartTime = now
+            waterReminderStartTime = now
+            eyeReminderStartTime = now
+        } else if (pauseStartTime > 0L) {
+            val pausedDuration = now - pauseStartTime
             sittingStartTime += pausedDuration
             microBreakStartTime += pausedDuration
             waterReminderStartTime += pausedDuration
             eyeReminderStartTime += pausedDuration
-            settingsDataStore.setSittingStartTime(sittingStartTime)
-            settingsDataStore.setMicroBreakStartTime(microBreakStartTime)
-            pauseStartTime = 0L
         }
+        settingsDataStore.setSittingStartTime(sittingStartTime)
+        settingsDataStore.setMicroBreakStartTime(microBreakStartTime)
+        autoPaused = false
+        pauseStartTime = 0L
         TimerStateHolder.setState(TimerState.Running)
     }
 
@@ -277,27 +287,37 @@ class TimerService : Service() {
         sittingStartTime = 0L
         microBreakStartTime = 0L
         pauseStartTime = 0L
+        autoPaused = false
         settingsDataStore.setSittingStartTime(0L)
         settingsDataStore.setMicroBreakStartTime(0L)
+        cancelReminderNotifications()
         stopSelf()
     }
 
     private suspend fun pauseTimer() {
-        sittingStartTime = 0L
-        microBreakStartTime = 0L
-        settingsDataStore.setSittingStartTime(0L)
-        settingsDataStore.setMicroBreakStartTime(0L)
+        pausedElapsedMinutes = ((System.currentTimeMillis() - sittingStartTime) / 60_000).toInt().coerceAtLeast(0)
+        pauseStartTime = System.currentTimeMillis()
         TimerStateHolder.setState(TimerState.Paused)
     }
 
     private suspend fun resumeTimer() {
         val now = System.currentTimeMillis()
-        sittingStartTime = now
-        microBreakStartTime = now
-        sittingReminderSent = false
-        microBreakReminderSent = false
-        settingsDataStore.setSittingStartTime(now)
-        settingsDataStore.setMicroBreakStartTime(now)
+        if (autoPaused) {
+            sittingStartTime = now
+            microBreakStartTime = now
+            waterReminderStartTime = now
+            eyeReminderStartTime = now
+        } else if (pauseStartTime > 0L) {
+            val pausedDuration = now - pauseStartTime
+            sittingStartTime += pausedDuration
+            microBreakStartTime += pausedDuration
+            waterReminderStartTime += pausedDuration
+            eyeReminderStartTime += pausedDuration
+        }
+        settingsDataStore.setSittingStartTime(sittingStartTime)
+        settingsDataStore.setMicroBreakStartTime(microBreakStartTime)
+        autoPaused = false
+        pauseStartTime = 0L
         TimerStateHolder.setState(TimerState.Running)
     }
 
@@ -322,6 +342,14 @@ class TimerService : Service() {
         startActivity(intent)
     }
 
+    private fun cancelReminderNotifications() {
+        val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        manager.cancel(NotificationHelper.NOTIFICATION_ID_SITTING)
+        manager.cancel(NotificationHelper.NOTIFICATION_ID_MICRO_BREAK)
+        manager.cancel(NotificationHelper.NOTIFICATION_ID_WATER)
+        manager.cancel(NotificationHelper.NOTIFICATION_ID_EYE)
+    }
+
     private suspend fun updateServiceNotification(elapsedMinutes: Int) {
         val todayStart = TimeUtils.getTodayStartMillis()
         val todayEnd = todayStart + 24 * 60 * 60 * 1000L
@@ -342,10 +370,10 @@ class TimerService : Service() {
             nextReminderMinutes = nextReminder,
             timerState = TimerStateHolder.getState(),
         )
-        val manager = getSystemService(NOTIFICATION_SERVICE) as android.app.NotificationManager
+        val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         manager.notify(NotificationHelper.NOTIFICATION_ID_SERVICE, notification)
 
-        // TODO: 桌面小组件数据更新 - 待实现正确的 Glance 更新 API
+        // 桌面小组件数据更新（需在打卡或状态变化时触发）
         // SitBreakWidget().updateAll(this)
     }
 
@@ -356,44 +384,48 @@ class TimerService : Service() {
     }
 
     companion object {
+        private const val TICK_INTERVAL_MS = 15_000L
+        private const val WATER_REMINDER_INTERVAL_MIN = 90
+        private const val EYE_REMINDER_INTERVAL_MIN = 20
+        private const val SNOOZE_DURATION_MS = 5 * 60 * 1000L
+
         const val ACTION_START = "com.sitbreak.app.ACTION_START"
-        const val ACTION_STOP = "com.sitbreak.app.ACTION_STOP"
 
-        private val actionFlow = MutableSharedFlow<ServiceAction>(extraBufferCapacity = 10)
-
-        fun start(context: android.content.Context) {
-            val intent = android.content.Intent(context, TimerService::class.java).apply {
+        fun start(context: Context) {
+            val intent = Intent(context, TimerService::class.java).apply {
                 action = ACTION_START
             }
             context.startForegroundService(intent)
         }
 
-        fun onStandUp() {
-            actionFlow.tryEmit(ServiceAction.STAND_UP)
+        fun onStandUp(context: Context) {
+            context.startForegroundService(
+                Intent(context, TimerService::class.java).setAction(NotificationHelper.ACTION_STAND_UP)
+            )
         }
 
-        fun onSnooze() {
-            actionFlow.tryEmit(ServiceAction.SNOOZE)
+        fun onSnooze(context: Context) {
+            context.startForegroundService(
+                Intent(context, TimerService::class.java).setAction(NotificationHelper.ACTION_SNOOZE)
+            )
         }
 
-        fun onPause() {
-            actionFlow.tryEmit(ServiceAction.PAUSE_TIMER)
+        fun onPause(context: Context) {
+            context.startForegroundService(
+                Intent(context, TimerService::class.java).setAction(NotificationHelper.ACTION_PAUSE_TIMER)
+            )
         }
 
-        fun onResume() {
-            actionFlow.tryEmit(ServiceAction.RESUME_TIMER)
+        fun onResume(context: Context) {
+            context.startForegroundService(
+                Intent(context, TimerService::class.java).setAction(NotificationHelper.ACTION_RESUME_TIMER)
+            )
         }
 
-        fun onStop() {
-            actionFlow.tryEmit(ServiceAction.STOP_TIMER)
+        fun onStop(context: Context) {
+            context.startForegroundService(
+                Intent(context, TimerService::class.java).setAction(NotificationHelper.ACTION_STOP_TIMER)
+            )
         }
-    }
-
-    private enum class ServiceAction {
-        STAND_UP,
-        SNOOZE,
-        PAUSE_TIMER,
-        RESUME_TIMER,
-        STOP_TIMER,
     }
 }

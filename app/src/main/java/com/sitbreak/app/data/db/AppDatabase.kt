@@ -15,8 +15,8 @@ abstract class AppDatabase : RoomDatabase() {
     companion object {
         private val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("CREATE INDEX IF NOT EXISTS idx_check_in_records_timestamp ON check_in_records(timestamp)")
-                database.execSQL("CREATE INDEX IF NOT EXISTS idx_check_in_records_type_timestamp ON check_in_records(type, timestamp)")
+                database.execSQL("CREATE INDEX IF NOT EXISTS index_check_in_records_timestamp ON check_in_records(timestamp)")
+                database.execSQL("CREATE INDEX IF NOT EXISTS index_check_in_records_type_timestamp ON check_in_records(type, timestamp)")
             }
         }
 

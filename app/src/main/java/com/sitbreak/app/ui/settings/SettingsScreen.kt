@@ -81,6 +81,9 @@ import com.sitbreak.app.ui.theme.TextSecondary
 import com.sitbreak.app.ui.theme.TextTertiary
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.sitbreak.app.R
 
 private val INTERVAL_OPTIONS = listOf(10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 75, 90)
 private val MICRO_BREAK_OPTIONS = listOf(5, 10, 15, 20, 25, 30)
@@ -473,6 +476,7 @@ private fun NotificationSettingsCard(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ReminderStyleSheet(
     currentStyle: String,
@@ -539,6 +543,7 @@ private fun IntervalPickerSheet(
     var isCustomSelected by remember { mutableStateOf(isCustom) }
     var customInput by remember { mutableStateOf(if (isCustom) currentValue.toString() else "") }
     var customError by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -576,7 +581,7 @@ private fun IntervalPickerSheet(
                     }
                 },
                 itemLabel = { value ->
-                    if (value == OPTION_CUSTOM) stringResource(R.string.settings_custom) else stringResource(R.string.settings_interval_minutes, value)
+                    if (value == OPTION_CUSTOM) context.getString(R.string.settings_custom) else context.getString(R.string.settings_interval_minutes, value)
                 },
             )
 

@@ -8,22 +8,10 @@ import com.sitbreak.app.service.TimerService
 class NotificationActionReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
-        when (intent.action) {
-            NotificationHelper.ACTION_STAND_UP -> {
-                TimerService.onStandUp()
-            }
-            NotificationHelper.ACTION_SNOOZE -> {
-                TimerService.onSnooze()
-            }
-            NotificationHelper.ACTION_PAUSE_TIMER -> {
-                TimerService.onPause()
-            }
-            NotificationHelper.ACTION_RESUME_TIMER -> {
-                TimerService.onResume()
-            }
-            NotificationHelper.ACTION_STOP_TIMER -> {
-                TimerService.onStop()
-            }
+        val action = intent.action ?: return
+        val serviceIntent = Intent(context, TimerService::class.java).apply {
+            this.action = action
         }
+        context.startForegroundService(serviceIntent)
     }
 }
