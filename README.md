@@ -252,7 +252,7 @@ flowchart TD
     Worker --> Notif
 ```
 
-关键设计取舍（完整记录见 [`docs/ARCHITECTURE_DECISIONS.md`](docs/ARCHITECTURE_DECISIONS.md)）：
+关键设计取舍（更多细节见 [`docs/ARCHITECTURE_DECISIONS.md`](docs/ARCHITECTURE_DECISIONS.md)）：
 
 | 决策 | 选择 | 核心理由 |
 |------|------|----------|

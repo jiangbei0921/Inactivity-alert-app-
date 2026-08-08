@@ -137,7 +137,7 @@ Application 实现 `Configuration.Provider`，并在 Manifest 里移除 WorkMana
 - Android 10+ 未授予 `ACTIVITY_RECOGNITION` 运行时权限 → `supported = false`；
 - `registerListener` 抛异常 → `supported = false`；
 - **`standingLikely()` 在不支持时恒返回 `false`，绝不返回「已验证」**，
-  并且验证失败不会阻止打卡记录写入 —— 验证只是加分项，不是前置条件。
+  并且验证失败不会阻止打卡记录写入 —— 验证只是可选项，不是前置条件。
 
 这套降级路径有专门的单测 `StandingValidatorTest` 兜底。
 
