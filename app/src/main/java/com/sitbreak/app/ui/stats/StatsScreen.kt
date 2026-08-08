@@ -13,9 +13,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
+import com.sitbreak.app.ui.components.AppCard
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -81,7 +80,7 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
 
         when (selectedTab) {
             0 -> WeeklyContent(weeklyAverage, dailyCounts, totalCheckIns, longestStreak)
-            1 -> MonthlyContent(totalCheckIns, longestStreak)
+            1 -> MonthlyContent(totalCheckIns, longestStreak, monthlyStandCounts)
             2 -> YearlyContent(yearlyCompletionRate, monthlyStandCounts, bestMonth)
         }
     }
@@ -142,19 +141,9 @@ private fun WeeklyContent(
     longestStreak: Int,
 ) {
     Column {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .shadow(
-                    elevation = 4.dp,
-                    shape = RoundedCornerShape(22.dp),
-                    ambientColor = Color.Black.copy(alpha = 0.06f),
-                    spotColor = Color.Black.copy(alpha = 0.06f),
-                ),
-            shape = RoundedCornerShape(22.dp),
-            colors = CardDefaults.cardColors(containerColor = CardBackground),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        ) {
+    AppCard(
+        modifier = Modifier.fillMaxWidth(),
+    ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -217,6 +206,7 @@ private fun WeeklyContent(
 private fun MonthlyContent(
     totalCheckIns: Int,
     longestStreak: Int,
+    monthlyStandCounts: List<StatsViewModel.MonthlyBarData>,
 ) {
     Column {
         Row(
@@ -234,6 +224,23 @@ private fun MonthlyContent(
                 value = "$longestStreak 天",
             )
         }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        Text(
+            text = "月度统计",
+            fontSize = 14.sp,
+            fontWeight = FontWeight.W600,
+            color = TextSecondary,
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        MonthlyBarChart(
+            data = monthlyStandCounts,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp),
+        )
     }
 }
 
@@ -244,19 +251,9 @@ private fun YearlyContent(
     bestMonth: String,
 ) {
     Column {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .shadow(
-                    elevation = 4.dp,
-                    shape = RoundedCornerShape(22.dp),
-                    ambientColor = Color.Black.copy(alpha = 0.06f),
-                    spotColor = Color.Black.copy(alpha = 0.06f),
-                ),
-            shape = RoundedCornerShape(22.dp),
-            colors = CardDefaults.cardColors(containerColor = CardBackground),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        ) {
+    AppCard(
+        modifier = Modifier.fillMaxWidth(),
+    ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -297,19 +294,9 @@ private fun YearlyContent(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .shadow(
-                    elevation = 4.dp,
-                    shape = RoundedCornerShape(22.dp),
-                    ambientColor = Color.Black.copy(alpha = 0.06f),
-                    spotColor = Color.Black.copy(alpha = 0.06f),
-                ),
-            shape = RoundedCornerShape(22.dp),
-            colors = CardDefaults.cardColors(containerColor = CardBackground),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        ) {
+    AppCard(
+        modifier = Modifier.fillMaxWidth(),
+    ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()

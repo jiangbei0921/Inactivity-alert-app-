@@ -8,6 +8,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import com.sitbreak.app.data.SettingsDataStore
 import com.sitbreak.app.notification.NotificationHelper
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -70,48 +71,24 @@ class SettingsViewModel @Inject constructor(
     }
 
     private fun loadSettings() {
-        viewModelScope.launch {
-            settingsDataStore.sittingIntervalMinutes.onEach { _sittingIntervalMinutes.value = it }.catch {}.launchIn(viewModelScope)
-        }
-        viewModelScope.launch {
-            settingsDataStore.microBreakIntervalMinutes.onEach { _microBreakIntervalMinutes.value = it }.catch {}.launchIn(viewModelScope)
-        }
-        viewModelScope.launch {
-            settingsDataStore.isMicroBreakEnabled.onEach { _isMicroBreakEnabled.value = it }.catch {}.launchIn(viewModelScope)
-        }
-        viewModelScope.launch {
-            settingsDataStore.workStartHour.onEach { _workStartHour.value = it }.catch {}.launchIn(viewModelScope)
-        }
-        viewModelScope.launch {
-            settingsDataStore.workEndHour.onEach { _workEndHour.value = it }.catch {}.launchIn(viewModelScope)
-        }
-        viewModelScope.launch {
-            settingsDataStore.isWeekendEnabled.onEach { _isWeekendEnabled.value = it }.catch {}.launchIn(viewModelScope)
-        }
-        viewModelScope.launch {
-            settingsDataStore.enabledDays.onEach { _enabledDays.value = it }.catch {}.launchIn(viewModelScope)
-        }
-        viewModelScope.launch {
-            settingsDataStore.isVibrationEnabled.onEach { _isVibrationEnabled.value = it }.catch {}.launchIn(viewModelScope)
-        }
-        viewModelScope.launch {
-            settingsDataStore.isSoundEnabled.onEach { _isSoundEnabled.value = it }.catch {}.launchIn(viewModelScope)
-        }
-        viewModelScope.launch {
-            settingsDataStore.notificationSoundIndex.onEach { _notificationSoundIndex.value = it }.catch {}.launchIn(viewModelScope)
-        }
-        viewModelScope.launch {
-            settingsDataStore.notificationSoundUri.onEach { _notificationSoundUri.value = it }.catch {}.launchIn(viewModelScope)
-        }
-        viewModelScope.launch {
-            settingsDataStore.isWaterReminderEnabled.onEach { _isWaterReminderEnabled.value = it }.catch {}.launchIn(viewModelScope)
-        }
-        viewModelScope.launch {
-            settingsDataStore.isEyeReminderEnabled.onEach { _isEyeReminderEnabled.value = it }.catch {}.launchIn(viewModelScope)
-        }
-        viewModelScope.launch {
-            settingsDataStore.reminderStyle.onEach { _reminderStyle.value = it }.catch {}.launchIn(viewModelScope)
-        }
+        bind(settingsDataStore.sittingIntervalMinutes, _sittingIntervalMinutes)
+        bind(settingsDataStore.microBreakIntervalMinutes, _microBreakIntervalMinutes)
+        bind(settingsDataStore.isMicroBreakEnabled, _isMicroBreakEnabled)
+        bind(settingsDataStore.workStartHour, _workStartHour)
+        bind(settingsDataStore.workEndHour, _workEndHour)
+        bind(settingsDataStore.isWeekendEnabled, _isWeekendEnabled)
+        bind(settingsDataStore.enabledDays, _enabledDays)
+        bind(settingsDataStore.isVibrationEnabled, _isVibrationEnabled)
+        bind(settingsDataStore.isSoundEnabled, _isSoundEnabled)
+        bind(settingsDataStore.notificationSoundIndex, _notificationSoundIndex)
+        bind(settingsDataStore.notificationSoundUri, _notificationSoundUri)
+        bind(settingsDataStore.isWaterReminderEnabled, _isWaterReminderEnabled)
+        bind(settingsDataStore.isEyeReminderEnabled, _isEyeReminderEnabled)
+        bind(settingsDataStore.reminderStyle, _reminderStyle)
+    }
+
+    private fun <T> bind(flow: Flow<T>, state: MutableStateFlow<T>) {
+        flow.onEach { state.value = it }.catch { }.launchIn(viewModelScope)
     }
 
     fun setSittingInterval(minutes: Int) {

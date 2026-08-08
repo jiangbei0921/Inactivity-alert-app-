@@ -21,9 +21,8 @@ import androidx.compose.material.icons.outlined.EventSeat
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.PhoneAndroid
 import androidx.compose.material.icons.outlined.Warning
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import com.sitbreak.app.ui.components.AppCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -64,18 +63,8 @@ fun HelpScreen(
         )
         Spacer(modifier = Modifier.height(20.dp))
 
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .shadow(
-                    elevation = 4.dp,
-                    shape = RoundedCornerShape(22.dp),
-                    ambientColor = Color.Black.copy(alpha = 0.06f),
-                    spotColor = Color.Black.copy(alpha = 0.06f),
-                ),
-            shape = RoundedCornerShape(22.dp),
-            colors = CardDefaults.cardColors(containerColor = CardBackground),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        AppCard(
+            modifier = Modifier.fillMaxWidth(),
         ) {
             Column(
                 modifier = Modifier
@@ -121,18 +110,8 @@ fun HelpScreen(
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .shadow(
-                    elevation = 4.dp,
-                    shape = RoundedCornerShape(22.dp),
-                    ambientColor = Color.Black.copy(alpha = 0.06f),
-                    spotColor = Color.Black.copy(alpha = 0.06f),
-                ),
-            shape = RoundedCornerShape(22.dp),
-            colors = CardDefaults.cardColors(containerColor = CardBackground),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        AppCard(
+            modifier = Modifier.fillMaxWidth(),
         ) {
             Column(
                 modifier = Modifier

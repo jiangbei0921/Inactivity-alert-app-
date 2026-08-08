@@ -73,8 +73,6 @@ object StandingValidator : SensorEventListener {
         supported = false
     }
 
-    fun stepsSinceStart(): Int = currentSteps
-
     /** 是否检测到足以说明「已起身活动」的步数。 */
     fun standingLikely(): Boolean = supported && currentSteps >= STAND_THRESHOLD_STEPS
 

@@ -25,8 +25,7 @@ import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.Stop
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import com.sitbreak.app.ui.components.AppCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -110,12 +109,12 @@ fun ActivityDetailScreen(
             item {
                 Spacer(modifier = Modifier.height(8.dp))
 
-                Card(
+                AppCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp),
                     shape = RoundedCornerShape(22.dp),
-                    colors = CardDefaults.cardColors(containerColor = activity.bgColor),
+                    containerColor = activity.bgColor,
                 ) {
                     Column(
                         modifier = Modifier
@@ -154,13 +153,13 @@ fun ActivityDetailScreen(
 
             items(activity.steps.size) { index ->
                 val step = activity.steps[index]
-                Card(
+                AppCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 4.dp),
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = CardBackground),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    containerColor = CardBackground,
+                    shadowElevation = 2.dp,
                 ) {
                     Row(
                         modifier = Modifier
@@ -197,12 +196,12 @@ fun ActivityDetailScreen(
                 Spacer(modifier = Modifier.height(20.dp))
 
                 if (isCompleted) {
-                    Card(
+                    AppCard(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp),
                         shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFFD1FAE5)),
+                        containerColor = Color(0xFFD1FAE5),
                     ) {
                         Row(
                             modifier = Modifier
@@ -227,13 +226,13 @@ fun ActivityDetailScreen(
                         }
                     }
                 } else {
-                    Card(
+                    AppCard(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp),
                         shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = CardBackground),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                        containerColor = CardBackground,
+                        shadowElevation = 4.dp,
                     ) {
                         Column(
                             modifier = Modifier

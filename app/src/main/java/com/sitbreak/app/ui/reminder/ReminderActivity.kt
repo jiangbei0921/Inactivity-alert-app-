@@ -26,8 +26,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.NotificationsActive
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import com.sitbreak.app.ui.components.AppCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -117,12 +116,11 @@ private fun ReminderScreen(
             .background(Color.Black.copy(alpha = 0.5f)),
         contentAlignment = Alignment.Center,
     ) {
-        Card(
+        AppCard(
             modifier = Modifier
                 .width(screenWidth - 48.dp),
             shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = CardBackground),
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+            shadowElevation = 8.dp,
         ) {
             Column(
                 modifier = Modifier

@@ -76,7 +76,7 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             var cachedStartTime = 0L
             while (true) {
-                if (TimerStateHolder.getState() == TimerState.Running) {
+                if (TimerStateHolder.state.value == TimerState.Running) {
                     if (cachedStartTime == 0L) {
                         cachedStartTime = settingsDataStore.sittingStartTime.first()
                     }

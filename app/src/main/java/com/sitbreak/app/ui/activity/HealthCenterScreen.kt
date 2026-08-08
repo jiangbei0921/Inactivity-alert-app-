@@ -18,8 +18,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import com.sitbreak.app.ui.components.AppCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -168,14 +167,14 @@ private fun ActivityCard(
     activity: ActivityItem,
     onClick: () -> Unit,
 ) {
-    Card(
+    AppCard(
         modifier = Modifier
             .fillMaxWidth()
             .aspectRatio(1f)
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = activity.bgColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        containerColor = activity.bgColor,
+        shadowElevation = 2.dp,
     ) {
         Column(
             modifier = Modifier

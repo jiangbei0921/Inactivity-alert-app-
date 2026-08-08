@@ -53,34 +53,7 @@ class StatsViewModel @Inject constructor(
     val bestMonth: StateFlow<String> = _bestMonth.asStateFlow()
 
     init {
-        loadStats()
-    }
-
-    fun loadStats() {
-        viewModelScope.launch {
-            val interval = settingsDataStore.sittingIntervalMinutes.first()
-            val startHour = settingsDataStore.workStartHour.first()
-            val endHour = settingsDataStore.workEndHour.first()
-            val workingHours = endHour - startHour
-            val target = if (workingHours > 0) (workingHours * 60) / interval else 0
-            _dailyTarget.value = target
-
-            val tzOffset = TimeUtils.getLocalTimezoneOffset()
-            val sevenDaysAgo = getSevenDaysAgo()
-            val counts = repository.getDailyCountsForLast7Days(sevenDaysAgo, tzOffset)
-
-            val barDataList = buildBarDataList(counts, target)
-            _dailyCounts.value = barDataList
-
-            val sum = barDataList.sumOf { it.count }
-            _weeklyAverage.value = if (barDataList.isNotEmpty()) {
-                sum.toFloat() / barDataList.size / target.coerceAtLeast(1)
-            } else 0f
-
-            _totalCheckIns.value = repository.getTotalCount()
-
-            _longestStreak.value = calculateLongestStreak(target)
-        }
+        loadWeeklyStats()
     }
 
     private suspend fun calculateLongestStreak(target: Int): Int {
@@ -208,57 +181,59 @@ class StatsViewModel @Inject constructor(
     private fun loadMonthlyStats() {
         viewModelScope.launch {
             _totalCheckIns.value = repository.getTotalCount()
+            // 「本月」页与「本年」页共用 12 个月柱状数据，避免该页只显示两张统计卡而无图表。
+            _monthlyStandCounts.value = computeMonthlyStandCounts(dailyTarget())
         }
     }
 
     private fun loadYearlyStats() {
         viewModelScope.launch {
-            val interval = settingsDataStore.sittingIntervalMinutes.first()
-            val startHour = settingsDataStore.workStartHour.first()
-            val endHour = settingsDataStore.workEndHour.first()
-            val workingHours = endHour - startHour
-            val dailyTarget = if (workingHours > 0) (workingHours * 60) / interval else 0
+            val barDataList = computeMonthlyStandCounts(dailyTarget())
 
-            val calendar = Calendar.getInstance()
-            calendar.set(Calendar.MONTH, Calendar.JANUARY)
-            calendar.set(Calendar.DAY_OF_MONTH, 1)
-            calendar.set(Calendar.HOUR_OF_DAY, 0)
-            calendar.set(Calendar.MINUTE, 0)
-            calendar.set(Calendar.SECOND, 0)
-            calendar.set(Calendar.MILLISECOND, 0)
-            val yearStart = calendar.timeInMillis
-
-            val tzOffset = TimeUtils.getLocalTimezoneOffset()
-            val counts = repository.getMonthlyCountsForYear(yearStart, tzOffset)
-
-            val barDataList = mutableListOf<MonthlyBarData>()
             var totalCompleted = 0
-            var totalPossible = 0
             var maxCount = 0
             var bestMonth = 1
-
-            for (month in 1..12) {
-                val found = counts.find { it.month == month }
-                val count = found?.count ?: 0
-                val workingDays = 22
-                val target = workingDays * dailyTarget
-
-                barDataList.add(MonthlyBarData("$month", count, target))
-
-                if (target > 0 && count >= target * 0.8f) {
-                    totalCompleted++
-                }
-                totalPossible++
-
-                if (count > maxCount) {
-                    maxCount = count
-                    bestMonth = month
+            barDataList.forEach { item ->
+                if (item.target > 0 && item.count >= item.target * 0.8f) totalCompleted++
+                if (item.count > maxCount) {
+                    maxCount = item.count
+                    bestMonth = item.monthLabel.toIntOrNull() ?: 1
                 }
             }
 
             _monthlyStandCounts.value = barDataList
-            _yearlyCompletionRate.value = if (totalPossible > 0) totalCompleted.toFloat() / totalPossible else 0f
+            _yearlyCompletionRate.value = if (barDataList.isNotEmpty()) totalCompleted.toFloat() / barDataList.size else 0f
             _bestMonth.value = "$bestMonth 月，共站立 $maxCount 次"
         }
+    }
+
+    /** 计算本年 1–12 月每月站立次数（月度统计图表数据），「本月」「本年」两页共用。 */
+    private suspend fun computeMonthlyStandCounts(dailyTarget: Int): List<MonthlyBarData> {
+        val calendar = Calendar.getInstance().apply {
+            set(Calendar.MONTH, Calendar.JANUARY)
+            set(Calendar.DAY_OF_MONTH, 1)
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        val yearStart = calendar.timeInMillis
+        val tzOffset = TimeUtils.getLocalTimezoneOffset()
+        val counts = repository.getMonthlyCountsForYear(yearStart, tzOffset)
+
+        val workingDays = 22
+        return (1..12).map { month ->
+            val count = counts.find { it.month == month }?.count ?: 0
+            MonthlyBarData("$month", count, workingDays * dailyTarget)
+        }
+    }
+
+    /** 由工作时段与提醒间隔推算「每日目标站立次数」。 */
+    private suspend fun dailyTarget(): Int {
+        val interval = settingsDataStore.sittingIntervalMinutes.first()
+        val startHour = settingsDataStore.workStartHour.first()
+        val endHour = settingsDataStore.workEndHour.first()
+        val workingHours = endHour - startHour
+        return if (workingHours > 0) (workingHours * 60) / interval else 0
     }
 }

@@ -23,6 +23,4 @@ object TimerStateHolder {
     fun setState(newState: TimerState) {
         _state.value = newState
     }
-
-    fun getState(): TimerState = _state.value
 }

@@ -64,6 +64,7 @@ class TimerService : Service() {
     private var pausedElapsedMinutes: Int = 0
     private var autoPaused: Boolean = false
     private var cachedStandCount: Int = 0
+    private var tickCount: Int = 0
 
     private lateinit var settingsDataStore: SettingsDataStore
     private lateinit var repository: CheckInRepository
@@ -81,7 +82,7 @@ class TimerService : Service() {
             NotificationHelper.ACTION_STAND_UP -> dispatch { handleStandUp() }
             NotificationHelper.ACTION_SNOOZE -> dispatch { handleSnooze() }
             NotificationHelper.ACTION_PAUSE_TIMER -> dispatch { handlePause() }
-            NotificationHelper.ACTION_RESUME_TIMER -> dispatch { handleResume() }
+            NotificationHelper.ACTION_RESUME_TIMER -> dispatch { resumeTimer() }
             NotificationHelper.ACTION_STOP_TIMER -> dispatch { handleStop() }
             else -> startTimer()
         }
@@ -91,6 +92,8 @@ class TimerService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onTaskRemoved(rootIntent: Intent?) {
+        // 前台计时服务：用户划掉任务卡片后应保持运行（START_REDELIVER_INTENT 会在被系统回收后自动重启），
+        // 因此这里不做任何停止处理，仅保留默认实现。
         super.onTaskRemoved(rootIntent)
     }
 
@@ -140,14 +143,7 @@ class TimerService : Service() {
     private fun loadSettingsAndStartTicking() {
         tickJob?.cancel()
         tickJob = scope.launch {
-            sittingIntervalMinutes = settingsDataStore.sittingIntervalMinutes.first()
-            microBreakIntervalMinutes = settingsDataStore.microBreakIntervalMinutes.first()
-            isMicroBreakEnabled = settingsDataStore.isMicroBreakEnabled.first()
-            isVibrationEnabled = settingsDataStore.isVibrationEnabled.first()
-            workStartHour = settingsDataStore.workStartHour.first()
-            workEndHour = settingsDataStore.workEndHour.first()
-            isWeekendEnabled = settingsDataStore.isWeekendEnabled.first()
-            enabledDays = settingsDataStore.enabledDays.first()
+            refreshSettings()
             sittingStartTime = settingsDataStore.sittingStartTime.first()
             microBreakStartTime = settingsDataStore.microBreakStartTime.first()
             isWaterReminderEnabled = settingsDataStore.isWaterReminderEnabled.first()
@@ -204,14 +200,16 @@ class TimerService : Service() {
 
     private suspend fun tick() {
         refreshSettings()
+        // 每约 60 秒（4 个 15 秒 tick）刷新一次当日站立次数，避免通知里的「今日站立」长期失真。
+        if (tickCount++ % 4 == 0) refreshStandCount()
 
-        if (TimerStateHolder.getState() == TimerState.Paused) {
+        if (TimerStateHolder.state.value == TimerState.Paused) {
             updateServiceNotification(pausedElapsedMinutes)
             return
         }
 
         if (!TimeUtils.isInWorkingHours(workStartHour, workEndHour, enabledDays, isWeekendEnabled)) {
-            if (TimerStateHolder.getState() == TimerState.Running) {
+            if (TimerStateHolder.state.value == TimerState.Running) {
                 autoPaused = true
                 pauseTimer()
             }
@@ -219,7 +217,7 @@ class TimerService : Service() {
             return
         }
 
-        if (TimerStateHolder.getState() != TimerState.Running) {
+        if (TimerStateHolder.state.value != TimerState.Running) {
             resumeTimer()
         }
 
@@ -309,32 +307,8 @@ class TimerService : Service() {
     }
 
     private suspend fun handlePause() {
-        pausedElapsedMinutes = ((System.currentTimeMillis() - sittingStartTime) / 60_000).toInt().coerceAtLeast(0)
-        pauseStartTime = System.currentTimeMillis()
-        autoPaused = false
-        TimerStateHolder.setState(TimerState.Paused)
+        pauseTimer()
         cancelReminderNotifications()
-    }
-
-    private suspend fun handleResume() {
-        val now = System.currentTimeMillis()
-        if (autoPaused) {
-            sittingStartTime = now
-            microBreakStartTime = now
-            waterReminderStartTime = now
-            eyeReminderStartTime = now
-        } else if (pauseStartTime > 0L) {
-            val pausedDuration = now - pauseStartTime
-            sittingStartTime += pausedDuration
-            microBreakStartTime += pausedDuration
-            waterReminderStartTime += pausedDuration
-            eyeReminderStartTime += pausedDuration
-        }
-        settingsDataStore.setSittingStartTime(sittingStartTime)
-        settingsDataStore.setMicroBreakStartTime(microBreakStartTime)
-        autoPaused = false
-        pauseStartTime = 0L
-        TimerStateHolder.setState(TimerState.Running)
     }
 
     private suspend fun handleStop() {
@@ -398,7 +372,7 @@ class TimerService : Service() {
             elapsedMinutes = elapsedMinutes,
             todayStandCount = todayStandCount,
             nextReminderMinutes = nextReminder,
-            timerState = TimerStateHolder.getState(),
+            timerState = TimerStateHolder.state.value,
         )
         val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         manager.notify(NotificationHelper.NOTIFICATION_ID_SERVICE, notification)
