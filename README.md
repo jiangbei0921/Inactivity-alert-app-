@@ -35,7 +35,7 @@
 
 想要更直观地了解「站一站」并下载体验？请访问产品官网：
 
-🔗 **[https://c6ec35d2328a41cab277d33bfa690546.bj9.agentos-app.net](https://c6ec35d2328a41cab277d33bfa690546.bj9.agentos-app.net)**
+🔗 **[https://ff39a623aaed4aecbd47ab262b992462.bj9.agentos-app.net](https://ff39a623aaed4aecbd47ab262b992462.bj9.agentos-app.net)**
 
 官网为纯静态页面，支持 **中文 / English** 一键切换，可直接下载最新 APK。
 
@@ -87,9 +87,11 @@
 
 不想本地编译，可直接下载由 GitHub Actions 在每次推送 `main` 后自动构建的最新安装包：
 
-- **最新版 APK（持续更新）**：[app-debug.apk](https://github.com/jiangbei0921/Inactivity-alert-app-/releases/download/latest/app-debug.apk)
+- **最新版 APK（国内免科学上网镜像）**：[app-debug.apk](https://ff39a623aaed4aecbd47ab262b992462.bj9.agentos-app.net/app-debug.apk)
 
 > 该链接指向仓库 `latest` 发布中的 `app-debug.apk`，基于发布标签，长期稳定可用（不受预发布标识影响）。每次向 `main` 推送代码，CI 都会重新构建并把最新 APK 更新到该发布。
+>
+> 注：上方「国内免科学上网镜像」为 CloudStudio 静态托管快照，**不会随 CI 自动更新**；需要最新版或镜像过期时，仍可用 GitHub 原链接（需科学上网）。二维码 `qrcode.png` 已指向该镜像，手机相机 / 浏览器扫码即可直接下载，无需科学上网。
 
 **安装步骤**
 1. 在手机浏览器中打开上面的链接，下载 `app-debug.apk`。
