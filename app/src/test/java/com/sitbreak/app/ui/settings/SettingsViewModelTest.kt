@@ -1,10 +1,12 @@
 package com.sitbreak.app.ui.settings
 
 import android.content.Context
+import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
-import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
@@ -35,6 +37,12 @@ class SettingsViewModelTest {
         settingsDataStore = mockk(relaxed = true)
         notificationHelper = mockk(relaxed = true)
         context = mockk()
+        // 为绑定（bind）提供合理的默认值，避免 relaxed mock 返回 0 干扰钳制断言。
+        every { settingsDataStore.sittingIntervalMinutes } returns MutableStateFlow(45)
+        every { settingsDataStore.workStartHour } returns MutableStateFlow(9)
+        every { settingsDataStore.workEndHour } returns MutableStateFlow(18)
+        every { settingsDataStore.isVibrationEnabled } returns MutableStateFlow(true)
+        every { settingsDataStore.isWaterReminderEnabled } returns MutableStateFlow(true)
     }
 
     @After
@@ -49,7 +57,7 @@ class SettingsViewModelTest {
     )
 
     @Test
-    fun `setSittingInterval clamps to 1..180`() {
+    fun `setSittingInterval clamps to range 1 to 180`() {
         val vm = createVm()
         vm.setSittingInterval(300)
         assertEquals(180, vm.sittingIntervalMinutes.value)
@@ -57,7 +65,7 @@ class SettingsViewModelTest {
         assertEquals(1, vm.sittingIntervalMinutes.value)
         vm.setSittingInterval(45)
         assertEquals(45, vm.sittingIntervalMinutes.value)
-        verify { settingsDataStore.setSittingInterval(any()) }
+        coVerify { settingsDataStore.setSittingInterval(any()) }
     }
 
     @Test
@@ -85,9 +93,9 @@ class SettingsViewModelTest {
         val vm = createVm()
         vm.setVibrationEnabled(false)
         assertEquals(false, vm.isVibrationEnabled.value)
-        verify { settingsDataStore.setVibrationEnabled(false) }
+        coVerify { settingsDataStore.setVibrationEnabled(false) }
         vm.setWaterReminderEnabled(false)
         assertEquals(false, vm.isWaterReminderEnabled.value)
-        verify { settingsDataStore.setWaterReminderEnabled(false) }
+        coVerify { settingsDataStore.setWaterReminderEnabled(false) }
     }
 }

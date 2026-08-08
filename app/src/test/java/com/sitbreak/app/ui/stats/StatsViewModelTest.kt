@@ -1,9 +1,10 @@
 package com.sitbreak.app.ui.stats
 
 import android.content.Context
-import com.sitbreak.app.data.CheckInDao
+import com.sitbreak.app.data.db.CheckInDao
 import com.sitbreak.app.data.CheckInRepository
 import com.sitbreak.app.data.SettingsDataStore
+import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
@@ -40,10 +41,10 @@ class StatsViewModelTest {
         every { settingsDataStore.sittingIntervalMinutes } returns MutableStateFlow(45)
         every { settingsDataStore.workStartHour } returns MutableStateFlow(9)
         every { settingsDataStore.workEndHour } returns MutableStateFlow(18)
-        every { repository.getDailyCountsForLast7Days(any(), any()) } returns emptyList<CheckInDao.DailyCount>()
-        every { repository.getTotalCount() } returns 0
-        every { repository.getMonthlyCountsForYear(any(), any()) } returns emptyList<CheckInDao.MonthlyCount>()
-        every { repository.getAllDayCountsByType(any(), any()) } returns emptyList<CheckInDao.DailyCount>()
+        coEvery { repository.getDailyCountsForLast7Days(any(), any()) } returns emptyList<CheckInDao.DailyCount>()
+        coEvery { repository.getTotalCount() } returns 0
+        coEvery { repository.getMonthlyCountsForYear(any(), any()) } returns emptyList<CheckInDao.MonthlyCount>()
+        coEvery { repository.getAllDayCountsByType(any(), any()) } returns emptyList<CheckInDao.DailyCount>()
     }
 
     @After
