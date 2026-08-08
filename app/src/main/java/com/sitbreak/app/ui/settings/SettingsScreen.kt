@@ -27,8 +27,7 @@ import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.Stop
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import com.sitbreak.app.ui.components.AppCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -319,11 +318,9 @@ private fun ReminderSettingsCard(
     onMicroBreakToggle: (Boolean) -> Unit,
     onSoundClick: () -> Unit,
 ) {
-    Card(
+    AppCard(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-        shape = RoundedCornerShape(22.dp),
-        colors = CardDefaults.cardColors(containerColor = CardBackground),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        shadowElevation = 4.dp,
     ) {
         Column {
             SettingRow(
@@ -379,11 +376,9 @@ private fun WorkTimeSettingsCard(
     onEndTimeClick: () -> Unit,
     onDayClick: () -> Unit,
 ) {
-    Card(
+    AppCard(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-        shape = RoundedCornerShape(22.dp),
-        colors = CardDefaults.cardColors(containerColor = CardBackground),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        shadowElevation = 4.dp,
     ) {
         Column {
             SettingRow(
@@ -429,11 +424,9 @@ private fun NotificationSettingsCard(
     onEyeToggle: (Boolean) -> Unit,
     onStyleClick: () -> Unit,
 ) {
-    Card(
+    AppCard(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-        shape = RoundedCornerShape(22.dp),
-        colors = CardDefaults.cardColors(containerColor = CardBackground),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        shadowElevation = 4.dp,
     ) {
         Column {
             SettingRow(

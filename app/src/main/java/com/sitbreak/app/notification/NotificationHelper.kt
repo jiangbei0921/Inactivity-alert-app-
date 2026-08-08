@@ -226,66 +226,48 @@ class NotificationHelper @Inject constructor() {
         manager.notify(NOTIFICATION_ID_SITTING, notification)
     }
 
+    private suspend fun sendSimpleReminder(
+        context: Context,
+        notificationId: Int,
+        title: String,
+        text: String,
+        vibrationEnabled: Boolean,
+    ) {
+        val (_, microChannelId) = currentChannelIds(context)
+        val notification = NotificationCompat.Builder(context, microChannelId)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle(title)
+            .setContentText(text)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setAutoCancel(true)
+            .setGroup(GROUP_KEY_REMINDERS)
+            .setVibrate(if (vibrationEnabled) longArrayOf(0, 200, 100, 200) else null)
+            .build()
+        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        manager.notify(notificationId, notification)
+    }
+
     suspend fun sendMicroBreakNotification(
         context: Context,
         sittingMinutes: Int,
         vibrationEnabled: Boolean = true,
-    ) {
-        val (_, microChannelId) = currentChannelIds(context)
-
-        val notification = NotificationCompat.Builder(context, microChannelId)
-            .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle("微休息一下")
-            .setContentText("你已经持续坐了 $sittingMinutes 分钟，休息一下眼睛和身体吧。")
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setAutoCancel(true)
-            .setGroup(GROUP_KEY_REMINDERS)
-            .setVibrate(if (vibrationEnabled) longArrayOf(0, 200, 100, 200) else null)
-            .build()
-
-        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        manager.notify(NOTIFICATION_ID_MICRO_BREAK, notification)
-    }
+    ) = sendSimpleReminder(
+        context,
+        NOTIFICATION_ID_MICRO_BREAK,
+        "微休息一下",
+        "你已经持续坐了 $sittingMinutes 分钟，休息一下眼睛和身体吧。",
+        vibrationEnabled,
+    )
 
     suspend fun sendWaterReminder(
         context: Context,
         vibrationEnabled: Boolean = true,
-    ) {
-        val (_, microChannelId) = currentChannelIds(context)
-
-        val notification = NotificationCompat.Builder(context, microChannelId)
-            .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle("喝杯水吧")
-            .setContentText("定时喝水，保持身体水分充足。")
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setAutoCancel(true)
-            .setGroup(GROUP_KEY_REMINDERS)
-            .setVibrate(if (vibrationEnabled) longArrayOf(0, 200, 100, 200) else null)
-            .build()
-
-        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        manager.notify(NOTIFICATION_ID_WATER, notification)
-    }
+    ) = sendSimpleReminder(context, NOTIFICATION_ID_WATER, "喝杯水吧", "定时喝水，保持身体水分充足。", vibrationEnabled)
 
     suspend fun sendEyeReminder(
         context: Context,
         vibrationEnabled: Boolean = true,
-    ) {
-        val (_, microChannelId) = currentChannelIds(context)
-
-        val notification = NotificationCompat.Builder(context, microChannelId)
-            .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle("护眼时间到")
-            .setContentText("20分钟了，记得看向远处休息一下眼睛。")
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setAutoCancel(true)
-            .setGroup(GROUP_KEY_REMINDERS)
-            .setVibrate(if (vibrationEnabled) longArrayOf(0, 200, 100, 200) else null)
-            .build()
-
-        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        manager.notify(NOTIFICATION_ID_EYE, notification)
-    }
+    ) = sendSimpleReminder(context, NOTIFICATION_ID_EYE, "护眼时间到", "20分钟了，记得看向远处休息一下眼睛。", vibrationEnabled)
 
     fun buildServiceNotification(
         context: Context,
@@ -377,12 +359,6 @@ class NotificationHelper @Inject constructor() {
             reminderIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
-    }
-
-    private suspend fun resolveNotificationSoundUri(context: Context): Uri {
-        val dataStore = NotificationSettingsDataStore(context)
-        val index = dataStore.notificationSoundIndex.first()
-        return resolveNotificationSoundUri(context, index)
     }
 
     private suspend fun resolveNotificationSoundUri(context: Context, soundIndex: Int): Uri {

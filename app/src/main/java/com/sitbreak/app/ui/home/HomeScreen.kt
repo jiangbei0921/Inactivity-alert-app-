@@ -33,10 +33,8 @@ import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
 import com.sitbreak.app.TimerState
 import com.sitbreak.app.health.StandingValidator
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -82,6 +80,7 @@ import com.sitbreak.app.ui.theme.CardBackground
 import com.sitbreak.app.ui.theme.PageBackground
 import com.sitbreak.app.ui.theme.TextPrimary
 import com.sitbreak.app.ui.theme.TextSecondary
+import com.sitbreak.app.ui.components.AppCard
 import com.sitbreak.app.ui.theme.TextTertiary
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -373,18 +372,8 @@ private fun TopBarIconButton(
 
 @Composable
 private fun WelcomeCard(onStart: () -> Unit) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .shadow(
-                elevation = 4.dp,
-                shape = RoundedCornerShape(22.dp),
-                ambientColor = Color.Black.copy(alpha = 0.06f),
-                spotColor = Color.Black.copy(alpha = 0.06f),
-            ),
-        shape = RoundedCornerShape(22.dp),
-        colors = CardDefaults.cardColors(containerColor = CardBackground),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+    AppCard(
+        modifier = Modifier.fillMaxWidth(),
     ) {
         Column(
             modifier = Modifier
@@ -446,18 +435,9 @@ private fun TodayInfoCard(
     intervalMinutes: Int,
     todayStandCount: Int,
 ) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .shadow(
-                elevation = 4.dp,
-                shape = RoundedCornerShape(18.dp),
-                ambientColor = Color.Black.copy(alpha = 0.06f),
-                spotColor = Color.Black.copy(alpha = 0.06f),
-            ),
+    AppCard(
+        modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = CardBackground),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
         Row(
             modifier = Modifier
@@ -588,19 +568,10 @@ private fun ActivityRecordItem(record: CheckInRecord) {
         else -> stringResource(R.string.home_record_snoozed) to ActivityType.SNOOZED
     }
 
-    Card(
+    AppCard(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 5.dp)
-            .shadow(
-                elevation = 4.dp,
-                shape = RoundedCornerShape(22.dp),
-                ambientColor = Color.Black.copy(alpha = 0.06f),
-                spotColor = Color.Black.copy(alpha = 0.06f),
-            ),
-        shape = RoundedCornerShape(22.dp),
-        colors = CardDefaults.cardColors(containerColor = CardBackground),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+            .padding(vertical = 5.dp),
     ) {
         Row(
             modifier = Modifier
