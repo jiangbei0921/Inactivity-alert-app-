@@ -127,5 +127,6 @@
     <string name="a11y_timer_progress">Sitting timer: %1$d min %2$d sec elapsed, target %3$d min, %4$d%% complete</string>
     <string name="a11y_open_notification_settings">Enable notification permission</string>
     <string name="a11y_open_activity_permission">Enable activity recognition permission</string>
+    <string name="a11y_open_settings">Open settings</string>
     <string name="a11y_stat_card">%1$s: %2$s</string>
 </resources>

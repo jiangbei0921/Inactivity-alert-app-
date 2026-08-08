@@ -127,5 +127,6 @@
     <string name="a11y_timer_progress">久坐计时：已坐 %1$d 分 %2$d 秒，目标 %3$d 分钟，完成 %4$d%%</string>
     <string name="a11y_open_notification_settings">开启通知权限</string>
     <string name="a11y_open_activity_permission">开启活动识别权限</string>
+    <string name="a11y_open_settings">打开设置</string>
     <string name="a11y_stat_card">%1$s：%2$s</string>
 </resources>

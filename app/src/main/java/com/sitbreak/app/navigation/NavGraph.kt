@@ -217,7 +217,7 @@ fun MainNavHost() {
                 )
             }
             composable(Routes.HOME) {
-                HomeScreen()
+                HomeScreen(navController = navController)
             }
             composable(Routes.STATS) {
                 StatsScreen()

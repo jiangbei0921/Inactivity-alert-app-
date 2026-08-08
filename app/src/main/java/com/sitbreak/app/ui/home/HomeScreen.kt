@@ -64,10 +64,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavHostController
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.sitbreak.app.R
+import com.sitbreak.app.navigation.Routes
 import com.sitbreak.app.data.db.CheckInRecord
 import com.sitbreak.app.ui.components.ActivityIcon
 import com.sitbreak.app.ui.components.ActivityType
@@ -87,7 +89,10 @@ import java.util.Date
 import java.util.Locale
 
 @Composable
-fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
+fun HomeScreen(
+    navController: NavHostController,
+    viewModel: HomeViewModel = hiltViewModel(),
+) {
     val timerState by viewModel.timerState.collectAsState()
     val elapsedSeconds by viewModel.elapsedSeconds.collectAsState()
     val targetSeconds by viewModel.targetSeconds.collectAsState()
@@ -331,20 +336,35 @@ private fun TopBar() {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        TopBarIconButton(icon = Icons.Outlined.Person)
+        TopBarIconButton(
+            icon = Icons.Outlined.Person,
+            contentDescription = stringResource(R.string.a11y_open_settings),
+            onClick = { navController.navigate(Routes.SETTINGS) },
+        )
         Text(
             text = stringResource(R.string.home_title),
             fontSize = 17.sp,
             fontWeight = FontWeight.W600,
             color = TextPrimary,
         )
-        TopBarIconButton(icon = Icons.Outlined.Notifications)
+        TopBarIconButton(
+            icon = Icons.Outlined.Notifications,
+            contentDescription = stringResource(R.string.a11y_open_notification_settings),
+            onClick = {
+                val ctx = LocalContext.current
+                val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                    putExtra(Settings.EXTRA_APP_PACKAGE, ctx.packageName)
+                }
+                ctx.startActivity(intent)
+            },
+        )
     }
 }
 
 @Composable
 private fun TopBarIconButton(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
+    contentDescription: String,
     onClick: (() -> Unit)? = null,
 ) {
     Box(
@@ -363,7 +383,7 @@ private fun TopBarIconButton(
     ) {
         Icon(
             imageVector = icon,
-            contentDescription = null,
+            contentDescription = contentDescription,
             tint = TextSecondary,
             modifier = Modifier.size(22.dp),
         )
