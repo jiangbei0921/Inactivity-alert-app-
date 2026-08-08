@@ -39,22 +39,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.sitbreak.app.data.CheckInRepository
-import com.sitbreak.app.data.db.AppDatabase
-import com.sitbreak.app.data.db.CheckInRecord
 import com.sitbreak.app.ui.theme.BluePrimary
 import com.sitbreak.app.ui.theme.CardBackground
 import com.sitbreak.app.ui.theme.PageBackground
 import com.sitbreak.app.ui.theme.TextPrimary
 import com.sitbreak.app.ui.theme.TextSecondary
 import com.sitbreak.app.ui.theme.TextTertiary
-import androidx.compose.runtime.rememberCoroutineScope
-import kotlinx.coroutines.launch
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
 @Suppress("DEPRECATION")
@@ -63,12 +58,11 @@ fun ActivityDetailScreen(
     onBack: () -> Unit,
 ) {
     val activity = activities.find { it.id == activityId } ?: return
-    val context = LocalContext.current
+    val viewModel: ActivityDetailViewModel = viewModel()
     var isRunning by remember { mutableStateOf(false) }
     var isCompleted by remember { mutableStateOf(false) }
     var remainingSeconds by remember { mutableStateOf(parseDuration(activity.duration)) }
     var timer by remember { mutableStateOf<CountDownTimer?>(null) }
-    val coroutineScope = rememberCoroutineScope()
 
     DisposableEffect(Unit) {
         onDispose { timer?.cancel() }
@@ -275,20 +269,7 @@ fun ActivityDetailScreen(
                                                 remainingSeconds = 0
                                                 isRunning = false
                                                 isCompleted = true
-                                                coroutineScope.launch {
-                                                    try {
-                                                        val repository = CheckInRepository(
-                                                            AppDatabase.getInstance(context).checkInDao()
-                                                        )
-                                                        repository.insert(
-                                                            CheckInRecord(
-                                                                timestamp = System.currentTimeMillis(),
-                                                                type = CheckInRecord.TYPE_EXERCISE,
-                                                            )
-                                                        )
-                                                    } catch (_: Exception) {
-                                                    }
-                                                }
+                                                viewModel.recordExerciseCompletion()
                                             }
                                         }.start()
                                     }
