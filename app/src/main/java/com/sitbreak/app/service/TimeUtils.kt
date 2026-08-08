@@ -41,6 +41,17 @@ object TimeUtils {
         return dayKey in enabledDays
     }
 
+    /**
+     * 判断时间戳是否为今天（按设备本地时区）。
+     */
+    fun isToday(timestamp: Long): Boolean {
+        if (timestamp <= 0L) return false
+        val now = Calendar.getInstance()
+        val target = Calendar.getInstance().apply { timeInMillis = timestamp }
+        return now.get(Calendar.YEAR) == target.get(Calendar.YEAR) &&
+                now.get(Calendar.DAY_OF_YEAR) == target.get(Calendar.DAY_OF_YEAR)
+    }
+
     fun isInWorkingHours(
         workStartHour: Int,
         workEndHour: Int,
