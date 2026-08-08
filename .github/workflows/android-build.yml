@@ -49,12 +49,17 @@ jobs:
         run: ./gradlew lintDebug --stacktrace
         continue-on-error: true
 
-      - name: Build debug APK
-        run: ./gradlew assembleDebug --stacktrace
+      - name: Build release APK
+        run: ./gradlew assembleRelease --stacktrace
+        env:
+          SIGNING_KEYSTORE_BASE64: ${{ secrets.SIGNING_KEYSTORE_BASE64 }}
+          SIGNING_KEYSTORE_PASSWORD: ${{ secrets.SIGNING_KEYSTORE_PASSWORD }}
+          SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
 
       - name: Locate APK
         id: apk
-        run: echo "path=$(ls app/build/outputs/apk/debug/*.apk)" >> "$GITHUB_OUTPUT"
+        run: echo "path=$(ls app/build/outputs/apk/release/*.apk)" >> "$GITHUB_OUTPUT"
 
       - name: Delete previous latest release & tag (if any)
         if: github.ref == 'refs/heads/main'

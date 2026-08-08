@@ -1,3 +1,5 @@
+import java.util.Base64
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -30,14 +32,37 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            // 仅当提供签名环境变量时才启用签名；否则 release 仅做 R8 混淆，便于本地/CI 验证
+            // 支持两种签名密钥注入方式：
+            // 1) SIGNING_KEYSTORE：指向本地 keystore 文件路径（本地开发/某些 CI 场景）
+            // 2) SIGNING_KEYSTORE_BASE64：将 keystore 文件 base64 编码后通过环境变量注入（GitHub Secrets 推荐）
+            // 四组信息（storeFile/storePassword/keyAlias/keyPassword）全部齐全时才启用签名。
             val keystorePath = System.getenv("SIGNING_KEYSTORE")
-            if (keystorePath != null) {
+            val keystoreBase64 = System.getenv("SIGNING_KEYSTORE_BASE64")
+            val storePasswordEnv = System.getenv("SIGNING_KEYSTORE_PASSWORD")
+            val keyAliasEnv = System.getenv("SIGNING_KEY_ALIAS")
+            val keyPasswordEnv = System.getenv("SIGNING_KEY_PASSWORD")
+
+            val effectiveKeystoreFile = when {
+                keystorePath != null && file(keystorePath).exists() -> file(keystorePath)
+                keystoreBase64 != null -> {
+                    val tempFile = rootProject.layout.buildDirectory.file("signing/release.keystore").get().asFile
+                    tempFile.parentFile.mkdirs()
+                    tempFile.writeBytes(Base64.getDecoder().decode(keystoreBase64))
+                    tempFile
+                }
+                else -> null
+            }
+
+            if (effectiveKeystoreFile != null
+                && storePasswordEnv != null
+                && keyAliasEnv != null
+                && keyPasswordEnv != null
+            ) {
                 signingConfig = signingConfigs.create("release") {
-                    storeFile = file(keystorePath)
-                    storePassword = System.getenv("SIGNING_KEYSTORE_PASSWORD")
-                    keyAlias = System.getenv("SIGNING_KEY_ALIAS")
-                    keyPassword = System.getenv("SIGNING_KEY_PASSWORD")
+                    storeFile = effectiveKeystoreFile
+                    storePassword = storePasswordEnv
+                    keyAlias = keyAliasEnv
+                    keyPassword = keyPasswordEnv
                 }
             }
         }
