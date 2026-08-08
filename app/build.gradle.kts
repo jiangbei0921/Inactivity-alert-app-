@@ -67,6 +67,15 @@ android {
     }
 }
 
+// Hilt 2.50 的 hiltAggregateDeps 任务调用 javapoet 1.13.0 才有的 ClassName.canonicalName()；
+// 而 Room 编译器（经 ksp 引入）会带旧版 javapoet(1.11.1) 并赢得版本决议，导致 NoSuchMethodError。
+// 强制 javapoet 1.13.0 统一版本，消除冲突。
+configurations.all {
+    resolutionStrategy {
+        force("com.squareup:javapoet:1.13.0")
+    }
+}
+
 dependencies {
     val composeBom = platform(libs.androidx.compose.bom)
     implementation(composeBom)
