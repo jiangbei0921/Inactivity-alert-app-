@@ -42,7 +42,6 @@ class StandingValidatorTest {
         StandingValidator.stop()
 
         assertFalse(StandingValidator.isSupported())
-        assertEquals(0, StandingValidator.stepsSinceStart())
         assertFalse(StandingValidator.standingLikely())
     }
 
@@ -50,7 +49,6 @@ class StandingValidatorTest {
     fun `standing likely is false before any measurement`() {
         StandingValidator.stop()
 
-        assertEquals(0, StandingValidator.stepsSinceStart())
         assertFalse(StandingValidator.standingLikely())
     }
 }

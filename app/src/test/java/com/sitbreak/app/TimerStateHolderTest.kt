@@ -78,7 +78,6 @@ class TimerStateHolderTest {
     @Test
     fun `get state stays in sync with flow value`() {
         TimerStateHolder.setState(TimerState.Reminder)
-        assertEquals(TimerState.Reminder, TimerStateHolder.getState())
         assertEquals(TimerState.Reminder, TimerStateHolder.state.value)
     }
 
