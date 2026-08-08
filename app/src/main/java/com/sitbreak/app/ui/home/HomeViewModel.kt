@@ -47,6 +47,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val _todayRecords = MutableStateFlow<List<CheckInRecord>>(emptyList())
     val todayRecords: StateFlow<List<CheckInRecord>> = _todayRecords.asStateFlow()
 
+    private val _lastStandVerified = MutableStateFlow<Boolean?>(null)
+    val lastStandVerified: StateFlow<Boolean?> = _lastStandVerified.asStateFlow()
+
     init {
         observeSettingsAndRefresh()
         startElapsedTimer()
@@ -124,6 +127,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun onStandUp() {
+        _lastStandVerified.value = null
         TimerService.onStandUp(getApplication())
         _elapsedSeconds.value = 0
         TimerStateHolder.setState(TimerState.Completed)
@@ -139,6 +143,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             delay(600L)
             refreshStats()
+            _lastStandVerified.value = TimerStateHolder.lastStandVerified
         }
     }
 

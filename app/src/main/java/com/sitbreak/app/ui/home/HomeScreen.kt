@@ -1,6 +1,7 @@
 package com.sitbreak.app.ui.home
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import androidx.activity.ComponentActivity
@@ -89,6 +90,7 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
     val todayCompletionRate by viewModel.todayCompletionRate.collectAsState()
     val todayActiveHours by viewModel.todayActiveHours.collectAsState()
     val todayRecords by viewModel.todayRecords.collectAsState()
+    val lastStandVerified by viewModel.lastStandVerified.collectAsState()
 
     val progress = if (targetSeconds > 0) {
         (elapsedSeconds.toFloat() / targetSeconds).coerceIn(0f, 1f)
@@ -104,6 +106,7 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         item { NotificationPermissionBanner() }
+        item { StepVerificationBanner() }
         item { TopBar() }
         item { Spacer(modifier = Modifier.height(20.dp)) }
 
@@ -232,6 +235,17 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
                 }
 
                 TimerState.Completed -> {
+                    if (lastStandVerified == true) {
+                        item {
+                            Text(
+                                text = stringResource(R.string.home_step_verified),
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.W500,
+                                color = Color(0xFF16A34A),
+                                modifier = Modifier.padding(bottom = 8.dp)
+                            )
+                        }
+                    }
                     item {
                         Button(
                             onClick = { viewModel.startTimer() },
@@ -627,6 +641,45 @@ private fun NotificationPermissionBanner() {
             text = stringResource(R.string.home_notification_permission_banner),
             fontSize = 13.sp,
             color = Color(0xFF854F0B)
+        )
+    }
+}
+
+@OptIn(ExperimentalPermissionsApi::class)
+@Composable
+private fun StepVerificationBanner() {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return
+
+    val permissionState = rememberPermissionState(
+        android.Manifest.permission.ACTIVITY_RECOGNITION
+    )
+    if (permissionState.status.isGranted) return
+
+    val context = LocalContext.current
+    val activity = context as? ComponentActivity
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFFE0F2FE))
+            .padding(horizontal = 16.dp, vertical = 10.dp)
+            .clickable {
+                val shouldShowRationale = activity?.shouldShowRequestPermissionRationale(
+                    android.Manifest.permission.ACTIVITY_RECOGNITION
+                ) ?: true
+                if (shouldShowRationale) {
+                    permissionState.launchPermissionRequest()
+                } else {
+                    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                        data = Uri.fromParts("package", context.packageName, null)
+                    }
+                    context.startActivity(intent)
+                }
+            }
+    ) {
+        Text(
+            text = stringResource(R.string.home_step_verify_banner),
+            fontSize = 13.sp,
+            color = Color(0xFF075985)
         )
     }
 }

@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [CheckInRecord::class], version = 2, exportSchema = false)
+@Database(entities = [CheckInRecord::class], version = 3, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun checkInDao(): CheckInDao
@@ -17,6 +17,12 @@ abstract class AppDatabase : RoomDatabase() {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL("CREATE INDEX IF NOT EXISTS index_check_in_records_timestamp ON check_in_records(timestamp)")
                 database.execSQL("CREATE INDEX IF NOT EXISTS index_check_in_records_type_timestamp ON check_in_records(type, timestamp)")
+            }
+        }
+
+        private val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE check_in_records ADD COLUMN verified INTEGER NOT NULL DEFAULT 0")
             }
         }
 
@@ -30,7 +36,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "sitbreak_database"
                 )
-                    .addMigrations(MIGRATION_1_2)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                     .build()
                     .also { INSTANCE = it }
             }

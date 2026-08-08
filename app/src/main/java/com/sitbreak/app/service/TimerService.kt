@@ -16,6 +16,7 @@ import com.sitbreak.app.data.SettingsDataStore
 import com.sitbreak.app.data.db.AppDatabase
 import com.sitbreak.app.data.db.CheckInRecord
 import com.sitbreak.app.detector.SmartDetector
+import com.sitbreak.app.health.StandingValidator
 import com.sitbreak.app.notification.NotificationHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -85,6 +86,8 @@ class TimerService : Service() {
 
     private fun startTimer() {
         startForeground()
+        TimerStateHolder.lastStandVerified = null
+        StandingValidator.start(this)
         loadSettingsAndStartTicking()
     }
 
@@ -248,11 +251,16 @@ class TimerService : Service() {
     private suspend fun handleStandUp() {
         val now = System.currentTimeMillis()
 
+        val verified = StandingValidator.standingLikely()
         val record = CheckInRecord(
             timestamp = now,
-            type = CheckInRecord.TYPE_STAND_UP
+            type = CheckInRecord.TYPE_STAND_UP,
+            verified = verified
         )
         repository.insert(record)
+
+        TimerStateHolder.lastStandVerified = verified
+        StandingValidator.stop()
 
         TimerStateHolder.setState(TimerState.Completed)
 
@@ -317,6 +325,7 @@ class TimerService : Service() {
         settingsDataStore.setSittingStartTime(0L)
         settingsDataStore.setMicroBreakStartTime(0L)
         cancelReminderNotifications()
+        StandingValidator.stop()
         stopSelf()
     }
 
@@ -377,6 +386,7 @@ class TimerService : Service() {
     }
 
     override fun onDestroy() {
+        StandingValidator.stop()
         tickJob?.cancel()
         scope.cancel()
         super.onDestroy()

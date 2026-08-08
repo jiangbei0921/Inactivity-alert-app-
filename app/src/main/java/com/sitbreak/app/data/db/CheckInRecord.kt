@@ -15,7 +15,8 @@ data class CheckInRecord(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
     val timestamp: Long = System.currentTimeMillis(),
-    val type: String = TYPE_STAND_UP
+    val type: String = TYPE_STAND_UP,
+    val verified: Boolean = false
 ) {
     companion object {
         const val TYPE_STAND_UP = "stand_up"
