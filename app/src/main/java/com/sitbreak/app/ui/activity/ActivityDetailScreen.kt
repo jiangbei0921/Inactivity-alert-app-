@@ -57,6 +57,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
 
 @Composable
+@Suppress("DEPRECATION")
 fun ActivityDetailScreen(
     activityId: String,
     onBack: () -> Unit,
@@ -68,8 +69,6 @@ fun ActivityDetailScreen(
     var remainingSeconds by remember { mutableStateOf(parseDuration(activity.duration)) }
     var timer by remember { mutableStateOf<CountDownTimer?>(null) }
     val coroutineScope = rememberCoroutineScope()
-
-    val totalSeconds = parseDuration(activity.duration)
 
     DisposableEffect(Unit) {
         onDispose { timer?.cancel() }

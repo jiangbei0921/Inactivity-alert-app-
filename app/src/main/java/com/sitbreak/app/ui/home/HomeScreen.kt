@@ -10,6 +10,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -34,6 +35,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import com.sitbreak.app.TimerState
+import com.sitbreak.app.health.StandingValidator
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
@@ -653,9 +655,16 @@ private fun StepVerificationBanner() {
     val permissionState = rememberPermissionState(
         android.Manifest.permission.ACTIVITY_RECOGNITION
     )
+    val context = LocalContext.current
+    // 授权成功或已授权时，若前台计时仍在运行则立即启用步数传感器验证，
+    // 修复「计时过程中才授予权限却未能生效」的边界缺陷
+    LaunchedEffect(permissionState.status) {
+        if (permissionState.status.isGranted) {
+            StandingValidator.start(context)
+        }
+    }
     if (permissionState.status.isGranted) return
 
-    val context = LocalContext.current
     val activity = context as? ComponentActivity
     Box(
         modifier = Modifier

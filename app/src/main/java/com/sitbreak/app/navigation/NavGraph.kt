@@ -89,6 +89,7 @@ sealed class BottomNavItem(
         icon = Icons.Outlined.Settings,
     )
 
+    @Suppress("DEPRECATION")
     data object Help : BottomNavItem(
         route = Routes.HELP,
         titleResId = R.string.nav_help,

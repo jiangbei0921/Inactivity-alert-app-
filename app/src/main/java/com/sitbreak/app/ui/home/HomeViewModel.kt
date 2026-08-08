@@ -10,6 +10,7 @@ import com.sitbreak.app.data.SettingsDataStore
 import com.sitbreak.app.data.db.AppDatabase
 import com.sitbreak.app.data.db.CheckInRecord
 import com.sitbreak.app.service.TimerService
+import com.sitbreak.app.health.StandingValidator
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -127,7 +128,10 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun onStandUp() {
-        _lastStandVerified.value = null
+        // 本地直接依据传感器状态判断本次计时是否检测到起身活动，
+        // 避免跨进程延迟读取 TimerStateHolder 导致的竞态（此前依赖 delay 轮询，不可靠）
+        val verified = StandingValidator.standingLikely()
+        _lastStandVerified.value = verified
         TimerService.onStandUp(getApplication())
         _elapsedSeconds.value = 0
         TimerStateHolder.setState(TimerState.Completed)
@@ -139,11 +143,10 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             val interval = settingsDataStore.sittingIntervalMinutes.first()
             _targetSeconds.value = interval * 60
         }
-        // 等服务侧异步写入打卡记录完成后再刷新，避免站立次数延迟一次
+        // 等待服务侧异步写入打卡记录完成后再刷新统计，避免站立次数延迟一次
         viewModelScope.launch {
             delay(600L)
             refreshStats()
-            _lastStandVerified.value = TimerStateHolder.lastStandVerified
         }
     }
 

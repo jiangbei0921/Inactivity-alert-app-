@@ -143,6 +143,7 @@ private fun TopBar(
 }
 
 @Composable
+@Suppress("DEPRECATION")
 private fun UsageContent() {
     val steps = listOf(
         Triple(Icons.Outlined.PhoneAndroid, "步骤一", "打开 APP，点击主页「开始计时」按钮启动久坐计时"),
@@ -165,6 +166,7 @@ private fun UsageContent() {
 }
 
 @Composable
+@Suppress("DEPRECATION")
 private fun AudienceContent() {
     val audiences = listOf(
         Triple(Icons.Outlined.Monitor, "办公室白领", "长时间坐在电脑前处理文件"),

@@ -381,8 +381,6 @@ class TimerService : Service() {
         val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         manager.notify(NotificationHelper.NOTIFICATION_ID_SERVICE, notification)
 
-        // 桌面小组件数据更新（需在打卡或状态变化时触发）
-        // SitBreakWidget().updateAll(this)
     }
 
     override fun onDestroy() {

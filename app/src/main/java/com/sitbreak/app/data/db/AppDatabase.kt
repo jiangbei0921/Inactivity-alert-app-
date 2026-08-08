@@ -14,15 +14,15 @@ abstract class AppDatabase : RoomDatabase() {
 
     companion object {
         private val MIGRATION_1_2 = object : Migration(1, 2) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("CREATE INDEX IF NOT EXISTS index_check_in_records_timestamp ON check_in_records(timestamp)")
-                database.execSQL("CREATE INDEX IF NOT EXISTS index_check_in_records_type_timestamp ON check_in_records(type, timestamp)")
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_check_in_records_timestamp ON check_in_records(timestamp)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_check_in_records_type_timestamp ON check_in_records(type, timestamp)")
             }
         }
 
         private val MIGRATION_2_3 = object : Migration(2, 3) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("ALTER TABLE check_in_records ADD COLUMN verified INTEGER NOT NULL DEFAULT 0")
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE check_in_records ADD COLUMN verified INTEGER NOT NULL DEFAULT 0")
             }
         }
 

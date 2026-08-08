@@ -28,6 +28,7 @@ object SmartDetector {
         return nm.currentInterruptionFilter != NotificationManager.INTERRUPTION_FILTER_ALL
     }
 
+    @Suppress("DEPRECATION")
     private fun isInCall(context: Context): Boolean {
         return try {
             val tm = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager

@@ -273,7 +273,6 @@ fun SettingsScreen(viewModel: SettingsViewModel = viewModel()) {
             },
             onPickCustomFile = { filePickerLauncher.launch(arrayOf("audio/mpeg", "audio/wav", "audio/ogg")) },
             customSoundUri = customSoundUri,
-            onCustomSoundUriPicked = { customSoundUri = it },
         )
     }
 
@@ -720,7 +719,6 @@ private fun WheelPicker(
             items(items.size) { index ->
                 val value = items[index]
                 val isSelected = index == centerIndex
-                val alpha = if (isSelected) 1f else 0.4f
 
                 Box(
                     modifier = Modifier
@@ -932,7 +930,6 @@ private fun SoundPickerSheet(
     onConfirm: (Int, String) -> Unit,
     onPickCustomFile: () -> Unit,
     customSoundUri: String,
-    onCustomSoundUriPicked: (String) -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var selectedIndex by remember { mutableStateOf(currentIndex) }
