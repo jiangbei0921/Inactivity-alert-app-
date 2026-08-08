@@ -67,13 +67,11 @@ android {
     }
 }
 
-// Hilt 2.50 的 hiltAggregateDeps 任务调用 javapoet 1.13.0 才有的 ClassName.canonicalName()；
-// 而 Room 编译器（经 ksp 引入）会带旧版 javapoet(1.11.1) 并赢得版本决议，导致 NoSuchMethodError。
-// 强制 javapoet 1.13.0 统一版本，消除冲突。
-configurations.all {
-    resolutionStrategy {
-        force("com.squareup:javapoet:1.13.0")
-    }
+// Hilt 2.50 的 hiltAggregateDeps 聚合任务会与 Room(经 ksp 引入) 争夺 javapoet 版本，
+// 导致 NoSuchMethodError: ClassName.canonicalName()（冲突发生在插件自身类路径，resolutionStrategy.force 无法触及）。
+// 关闭聚合任务让 Hilt 按模块独立处理，避开该冲突（官方推荐方案）。
+hilt {
+    enableAggregatingTask = false
 }
 
 dependencies {
