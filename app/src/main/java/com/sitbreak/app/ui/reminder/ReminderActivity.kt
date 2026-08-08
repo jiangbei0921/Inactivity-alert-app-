@@ -46,6 +46,7 @@ import androidx.compose.runtime.getValue
 import com.sitbreak.app.TimerState
 import com.sitbreak.app.TimerStateHolder
 import com.sitbreak.app.notification.NotificationHelper
+import com.sitbreak.app.service.TimerService
 import com.sitbreak.app.ui.theme.BluePrimary
 import com.sitbreak.app.ui.theme.CardBackground
 import com.sitbreak.app.ui.theme.TextPrimary
@@ -78,17 +79,19 @@ class ReminderActivity : ComponentActivity() {
             ReminderScreen(
                 sittingMinutes = sittingMinutes,
                 onStandUp = {
-                    val intent = Intent(this, com.sitbreak.app.notification.NotificationActionReceiver::class.java).apply {
-                        action = NotificationHelper.ACTION_STAND_UP
-                    }
-                    sendBroadcast(intent)
+                    startForegroundService(
+                        Intent(this, TimerService::class.java).apply {
+                            action = NotificationHelper.ACTION_STAND_UP
+                        }
+                    )
                     finish()
                 },
                 onSnooze = {
-                    val intent = Intent(this, com.sitbreak.app.notification.NotificationActionReceiver::class.java).apply {
-                        action = NotificationHelper.ACTION_SNOOZE
-                    }
-                    sendBroadcast(intent)
+                    startForegroundService(
+                        Intent(this, TimerService::class.java).apply {
+                            action = NotificationHelper.ACTION_SNOOZE
+                        }
+                    )
                     finish()
                 },
             )

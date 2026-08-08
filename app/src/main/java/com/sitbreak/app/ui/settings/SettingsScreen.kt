@@ -63,13 +63,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.sitbreak.app.ui.components.SectionHeader
 import com.sitbreak.app.notification.ReminderCopywriter
 import com.sitbreak.app.ui.components.SettingRow
@@ -85,8 +86,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import com.sitbreak.app.R
 
 private val INTERVAL_OPTIONS = listOf(10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 75, 90)
@@ -120,7 +119,7 @@ private val ALL_DAYS_KEYS = setOf("MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(viewModel: SettingsViewModel = viewModel()) {
+fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
     val sittingInterval by viewModel.sittingIntervalMinutes.collectAsState()
     val microBreakInterval by viewModel.microBreakIntervalMinutes.collectAsState()
     val isMicroBreakEnabled by viewModel.isMicroBreakEnabled.collectAsState()

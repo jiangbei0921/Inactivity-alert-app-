@@ -28,7 +28,7 @@
     <string name="home_completion_rate">完成率</string>
     <string name="home_active_hours">活动时长</string>
     <string name="home_today_record">今日记录</string>
-    <string name="home_target_time">目标 %02d:%02d</string>
+    <string name="home_target_time">目标 %1$02d:%2$02d</string>
     <string name="home_elapsed_label">已久坐</string>
     <string name="home_record_stand_up">站立提醒</string>
     <string name="home_record_micro_break">微休息</string>
@@ -74,7 +74,7 @@
     <string name="settings_select_micro_break">选择微休息间隔</string>
     <string name="settings_custom">自定义</string>
     <string name="settings_custom_minutes">自定义分钟数</string>
-    <string name="settings_custom_range_hint">请输入 %d~%d 之间的分钟数</string>
+    <string name="settings_custom_range_hint">请输入 %1$d~%2$d 之间的分钟数</string>
 
     <!-- Settings: Common -->
     <string name="settings_cancel">取消</string>
@@ -111,4 +111,21 @@
 
     <!-- Settings: Style Picker -->
     <string name="settings_select_style">选择提醒风格</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_skip">跳过</string>
+    <string name="onboarding_next">下一步</string>
+    <string name="onboarding_start">开始使用</string>
+    <string name="onboarding_p1_title">久坐，是慢慢发生的</string>
+    <string name="onboarding_p1_desc">站一站会在后台记录你的连续久坐时长，到点用一条通知把你叫起来。默认 45 分钟提醒一次，可自由调整。</string>
+    <string name="onboarding_p2_title">提醒不只是响一声</string>
+    <string name="onboarding_p2_desc">除了站立提醒，还有微休息、喝水、护眼提醒。全屏提醒会避开你正在游戏或看视频的场景，不打断关键时刻。</string>
+    <string name="onboarding_p3_title">数据只留在这台手机上</string>
+    <string name="onboarding_p3_desc">打卡记录写入本地数据库，App 不联网、不上传、无账号。通知权限用于提醒，活动识别权限用于验证你是否真的起身，都可以稍后再开。</string>
+
+    <!-- Accessibility (TalkBack) -->
+    <string name="a11y_timer_progress">久坐计时：已坐 %1$d 分 %2$d 秒，目标 %3$d 分钟，完成 %4$d%%</string>
+    <string name="a11y_open_notification_settings">开启通知权限</string>
+    <string name="a11y_open_activity_permission">开启活动识别权限</string>
+    <string name="a11y_stat_card">%1$s：%2$s</string>
 </resources>

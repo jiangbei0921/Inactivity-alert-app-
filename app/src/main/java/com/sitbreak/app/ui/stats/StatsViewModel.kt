@@ -1,11 +1,13 @@
 package com.sitbreak.app.ui.stats
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import android.content.Context
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
 import com.sitbreak.app.data.CheckInRepository
 import com.sitbreak.app.data.SettingsDataStore
-import com.sitbreak.app.data.db.AppDatabase
 import com.sitbreak.app.data.db.CheckInDao
 import com.sitbreak.app.data.db.CheckInRecord
 import com.sitbreak.app.service.TimeUtils
@@ -16,10 +18,12 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
-class StatsViewModel(application: Application) : AndroidViewModel(application) {
-
-    private val repository = CheckInRepository(AppDatabase.getInstance(application).checkInDao())
-    private val settingsDataStore = SettingsDataStore(application)
+@HiltViewModel
+class StatsViewModel @Inject constructor(
+    @ApplicationContext private val appContext: Context,
+    private val repository: CheckInRepository,
+    private val settingsDataStore: SettingsDataStore,
+) : ViewModel() {
 
     private val _weeklyAverage = MutableStateFlow(0f)
     val weeklyAverage: StateFlow<Float> = _weeklyAverage.asStateFlow()

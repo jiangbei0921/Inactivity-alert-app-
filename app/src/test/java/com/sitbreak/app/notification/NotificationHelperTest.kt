@@ -15,8 +15,9 @@ class NotificationHelperTest {
             NotificationHelper.NOTIFICATION_ID_SERVICE,
             NotificationHelper.NOTIFICATION_ID_WATER,
             NotificationHelper.NOTIFICATION_ID_EYE,
+            NotificationHelper.NOTIFICATION_ID_DAILY_SUMMARY,
         )
-        assertEquals(5, ids.size)
+        assertEquals(6, ids.size)
     }
 
     @Test
@@ -25,8 +26,9 @@ class NotificationHelperTest {
             NotificationHelper.CHANNEL_SITTING_REMINDER,
             NotificationHelper.CHANNEL_MICRO_BREAK,
             NotificationHelper.CHANNEL_SERVICE,
+            NotificationHelper.CHANNEL_DAILY_SUMMARY,
         )
-        assertEquals(3, channels.size)
+        assertEquals(4, channels.size)
     }
 
     @Test
@@ -56,5 +58,6 @@ class NotificationHelperTest {
         assertTrue(NotificationHelper.NOTIFICATION_ID_SERVICE > 0)
         assertTrue(NotificationHelper.NOTIFICATION_ID_WATER > 0)
         assertTrue(NotificationHelper.NOTIFICATION_ID_EYE > 0)
+        assertTrue(NotificationHelper.NOTIFICATION_ID_DAILY_SUMMARY > 0)
     }
 }

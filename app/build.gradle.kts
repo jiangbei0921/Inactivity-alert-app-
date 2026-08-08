@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.hilt.android)
 }
 
 android {
@@ -23,11 +24,22 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            // 仅当提供签名环境变量时才启用签名；否则 release 仅做 R8 混淆，便于本地/CI 验证
+            val keystorePath = System.getenv("SIGNING_KEYSTORE")
+            if (keystorePath != null) {
+                signingConfig = signingConfigs.create("release") {
+                    storeFile = file(keystorePath)
+                    storePassword = System.getenv("SIGNING_KEYSTORE_PASSWORD")
+                    keyAlias = System.getenv("SIGNING_KEY_ALIAS")
+                    keyPassword = System.getenv("SIGNING_KEY_PASSWORD")
+                }
+            }
         }
     }
 
@@ -53,6 +65,13 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+}
+
+// Hilt 2.50 的 hiltAggregateDeps 聚合任务会与 Room(经 ksp 引入) 争夺 javapoet 版本，
+// 导致 NoSuchMethodError: ClassName.canonicalName()（冲突发生在插件自身类路径，resolutionStrategy.force 无法触及）。
+// 关闭聚合任务让 Hilt 按模块独立处理，避开该冲突（官方推荐方案）。
+hilt {
+    enableAggregatingTask = false
 }
 
 dependencies {
@@ -84,6 +103,10 @@ dependencies {
 
     implementation(libs.accompanist.permissions)
 
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
+    implementation(libs.androidx.hilt.navigation.compose)
+
     implementation(libs.androidx.glance.appwidget)
     implementation(libs.androidx.glance.material3)
 
@@ -94,4 +117,5 @@ dependencies {
     testImplementation(libs.mockk)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.androidx.core.testing)
+    testImplementation(libs.turbine)
 }

@@ -33,7 +33,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalDensity
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.sitbreak.app.ui.components.StatCard
 import com.sitbreak.app.ui.theme.BlueLight
 import com.sitbreak.app.ui.theme.BluePrimary
@@ -44,7 +44,7 @@ import com.sitbreak.app.ui.theme.TextPrimary
 import com.sitbreak.app.ui.theme.TextSecondary
 
 @Composable
-fun StatsScreen(viewModel: StatsViewModel = viewModel()) {
+fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
     val selectedTab by viewModel.selectedTab.collectAsState()
     val weeklyAverage by viewModel.weeklyAverage.collectAsState()
     val dailyCounts by viewModel.dailyCounts.collectAsState()

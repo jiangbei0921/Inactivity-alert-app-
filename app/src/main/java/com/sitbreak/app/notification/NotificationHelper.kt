@@ -8,110 +8,207 @@ import android.content.Intent
 import android.media.AudioAttributes
 import android.media.RingtoneManager
 import android.net.Uri
+import android.os.Build
 import androidx.core.app.NotificationCompat
+import com.sitbreak.app.MainActivity
+import com.sitbreak.app.R
 import com.sitbreak.app.TimerState
 import com.sitbreak.app.data.NotificationSettingsDataStore
 import com.sitbreak.app.data.SettingsDataStore
+import com.sitbreak.app.service.TimerService
 import com.sitbreak.app.ui.reminder.ReminderActivity
 import kotlinx.coroutines.flow.first
+import javax.inject.Inject
 
-object NotificationHelper {
+class NotificationHelper @Inject constructor() {
 
-    const val CHANNEL_SITTING_REMINDER = "sitting_reminder"
-    const val CHANNEL_MICRO_BREAK = "micro_break"
-    const val CHANNEL_SERVICE = "timer_service"
+    companion object {
+        const val CHANNEL_SERVICE = "timer_service"
+        const val CHANNEL_SITTING_REMINDER = "sitting_reminder"
+        const val CHANNEL_MICRO_BREAK = "micro_break"
+        const val CHANNEL_DAILY_SUMMARY = "daily_summary"
 
-    const val NOTIFICATION_ID_SITTING = 1001
-    const val NOTIFICATION_ID_MICRO_BREAK = 1002
-    const val NOTIFICATION_ID_SERVICE = 1003
-    const val NOTIFICATION_ID_WATER = 1004
-    const val NOTIFICATION_ID_EYE = 1005
+        private const val GROUP_KEY_REMINDERS = "sitbreak_reminders"
 
-    const val ACTION_STAND_UP = "com.sitbreak.app.ACTION_STAND_UP"
-    const val ACTION_SNOOZE = "com.sitbreak.app.ACTION_SNOOZE"
-    const val ACTION_PAUSE_TIMER = "com.sitbreak.app.ACTION_PAUSE_TIMER"
-    const val ACTION_RESUME_TIMER = "com.sitbreak.app.ACTION_RESUME_TIMER"
-    const val ACTION_STOP_TIMER = "com.sitbreak.app.ACTION_STOP_TIMER"
+        const val NOTIFICATION_ID_SITTING = 1001
+        const val NOTIFICATION_ID_MICRO_BREAK = 1002
+        const val NOTIFICATION_ID_SERVICE = 1003
+        const val NOTIFICATION_ID_WATER = 1004
+        const val NOTIFICATION_ID_EYE = 1005
+        const val NOTIFICATION_ID_DAILY_SUMMARY = 1006
 
-    private const val GROUP_KEY_REMINDERS = "sitbreak_reminders"
+        const val ACTION_STAND_UP = "com.sitbreak.app.ACTION_STAND_UP"
+        const val ACTION_SNOOZE = "com.sitbreak.app.ACTION_SNOOZE"
+        const val ACTION_PAUSE_TIMER = "com.sitbreak.app.ACTION_PAUSE_TIMER"
+        const val ACTION_RESUME_TIMER = "com.sitbreak.app.ACTION_RESUME_TIMER"
+        const val ACTION_STOP_TIMER = "com.sitbreak.app.ACTION_STOP_TIMER"
+    }
 
-    suspend fun createChannels(context: Context) {
-        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val settings = SettingsDataStore(context)
-        val isSoundEnabled = settings.isSoundEnabled.first()
-        val isVibrationEnabled = settings.isVibrationEnabled.first()
-        val soundUri = if (isSoundEnabled) resolveNotificationSoundUri(context) else null
-        val audioAttributes = AudioAttributes.Builder()
+    private val audioAttributes by lazy {
+        AudioAttributes.Builder()
             .setUsage(AudioAttributes.USAGE_NOTIFICATION)
             .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
             .build()
-
-        val sittingChannel = NotificationChannel(
-            CHANNEL_SITTING_REMINDER,
-            "久坐提醒",
-            NotificationManager.IMPORTANCE_HIGH
-        ).apply {
-            description = "提醒您站起来活动一下"
-            enableVibration(isVibrationEnabled)
-            setSound(if (isSoundEnabled) soundUri else null, audioAttributes)
-        }
-
-        val microBreakChannel = NotificationChannel(
-            CHANNEL_MICRO_BREAK,
-            "微休息",
-            NotificationManager.IMPORTANCE_DEFAULT
-        ).apply {
-            description = "提醒您短暂休息片刻"
-            enableVibration(isVibrationEnabled)
-            setSound(if (isSoundEnabled) soundUri else null, audioAttributes)
-        }
-
-        val serviceChannel = NotificationChannel(
-            CHANNEL_SERVICE,
-            "计时服务",
-            NotificationManager.IMPORTANCE_LOW
-        ).apply {
-            description = "久坐计时器后台运行"
-            setShowBadge(false)
-        }
-
-        manager.createNotificationChannel(sittingChannel)
-        manager.createNotificationChannel(microBreakChannel)
-        manager.createNotificationChannel(serviceChannel)
     }
 
-    suspend fun sendSittingReminder(context: Context, sittingMinutes: Int, soundEnabled: Boolean = true, vibrationEnabled: Boolean = true) {
-        val standUpIntent = Intent(context, NotificationActionReceiver::class.java).apply {
-            action = ACTION_STAND_UP
+    /**
+     * 根据当前设置创建/更新通知渠道。
+     * 提醒类渠道使用动态 ID（编码声音/震动/铃声索引），确保 Android O+ 上修改设置后能生效。
+     */
+    suspend fun createChannels(context: Context) {
+        val settings = SettingsDataStore(context)
+        val isSoundEnabled = settings.isSoundEnabled.first()
+        val isVibrationEnabled = settings.isVibrationEnabled.first()
+        val soundIndex = settings.notificationSoundIndex.first()
+
+        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        val sittingId = sittingChannelId(isSoundEnabled, isVibrationEnabled, soundIndex)
+        val microId = microChannelId(isSoundEnabled, isVibrationEnabled, soundIndex)
+
+        // 清理旧的提醒渠道（避免用户设置变更后旧渠道仍然生效）
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            manager.notificationChannels?.forEach { channel ->
+                val id = channel.id
+                if ((id.startsWith(CHANNEL_SITTING_REMINDER) && id != sittingId) ||
+                    (id.startsWith(CHANNEL_MICRO_BREAK) && id != microId)
+                ) {
+                    manager.deleteNotificationChannel(id)
+                }
+            }
         }
-        val standUpPendingIntent = PendingIntent.getBroadcast(
-            context,
-            0,
-            standUpIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+
+        manager.createNotificationChannel(
+            buildReminderChannel(
+                id = sittingId,
+                name = "久坐提醒",
+                description = "提醒您站起来活动一下",
+                importance = NotificationManager.IMPORTANCE_HIGH,
+                isSoundEnabled = isSoundEnabled,
+                isVibrationEnabled = isVibrationEnabled,
+                soundIndex = soundIndex,
+                context = context,
+            )
         )
 
-        val snoozeIntent = Intent(context, NotificationActionReceiver::class.java).apply {
-            action = ACTION_SNOOZE
-        }
-        val snoozePendingIntent = PendingIntent.getBroadcast(
-            context,
-            1,
-            snoozeIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        manager.createNotificationChannel(
+            buildReminderChannel(
+                id = microId,
+                name = "微休息",
+                description = "提醒您短暂休息片刻",
+                importance = NotificationManager.IMPORTANCE_DEFAULT,
+                isSoundEnabled = isSoundEnabled,
+                isVibrationEnabled = isVibrationEnabled,
+                soundIndex = soundIndex,
+                context = context,
+            )
         )
 
-        val reminderIntent = Intent(context, ReminderActivity::class.java).apply {
-            putExtra(ReminderActivity.EXTRA_SITTING_MINUTES, sittingMinutes)
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        }
-        val fullScreenPendingIntent = PendingIntent.getActivity(
-            context, 12, reminderIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        manager.createNotificationChannel(
+            NotificationChannel(
+                CHANNEL_SERVICE,
+                "计时服务",
+                NotificationManager.IMPORTANCE_LOW,
+            ).apply {
+                description = "久坐计时器后台运行"
+                setShowBadge(false)
+            }
         )
 
-        val notification = NotificationCompat.Builder(context, CHANNEL_SITTING_REMINDER)
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+        // 每日小结属于「可以静默错过」的信息，用 LOW 重要度，不响铃不震动
+        manager.createNotificationChannel(
+            NotificationChannel(
+                CHANNEL_DAILY_SUMMARY,
+                "每日小结",
+                NotificationManager.IMPORTANCE_LOW,
+            ).apply {
+                description = "每天汇总昨天的站立情况"
+                setShowBadge(false)
+            }
+        )
+    }
+
+    /**
+     * 每日小结通知，由 [com.sitbreak.app.work.DailySummaryWorker] 触发。
+     * 与提醒类通知刻意分渠道，用户可以只关掉小结而保留提醒。
+     */
+    fun sendDailySummary(context: Context, standCount: Int, activeMinutes: Int) {
+        val title = if (standCount > 0) "昨天站起来了 $standCount 次" else "昨天一次都没站起来"
+        val text = if (standCount > 0) {
+            "累计活动约 $activeMinutes 分钟，今天继续保持 👍"
+        } else {
+            "今天给自己定个小目标：先站 3 次。"
+        }
+
+        val notification = NotificationCompat.Builder(context, CHANNEL_DAILY_SUMMARY)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle(title)
+            .setContentText(text)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(text))
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setAutoCancel(true)
+            .setContentIntent(
+                PendingIntent.getActivity(
+                    context,
+                    2001,
+                    Intent(context, MainActivity::class.java),
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+                )
+            )
+            .build()
+
+        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        manager.notify(NOTIFICATION_ID_DAILY_SUMMARY, notification)
+    }
+
+    private suspend fun buildReminderChannel(
+        id: String,
+        name: String,
+        description: String,
+        importance: Int,
+        isSoundEnabled: Boolean,
+        isVibrationEnabled: Boolean,
+        soundIndex: Int,
+        context: Context,
+    ): NotificationChannel {
+        return NotificationChannel(id, name, importance).apply {
+            this.description = description
+            enableVibration(isVibrationEnabled)
+            vibrationPattern = if (isVibrationEnabled) longArrayOf(0, 300, 200, 300) else null
+            setSound(
+                if (isSoundEnabled) resolveNotificationSoundUri(context, soundIndex) else null,
+                audioAttributes,
+            )
+        }
+    }
+
+    private fun sittingChannelId(sound: Boolean, vibration: Boolean, soundIndex: Int): String {
+        return "${CHANNEL_SITTING_REMINDER}_${bool(sound)}_${bool(vibration)}_$soundIndex"
+    }
+
+    private fun microChannelId(sound: Boolean, vibration: Boolean, soundIndex: Int): String {
+        return "${CHANNEL_MICRO_BREAK}_${bool(sound)}_${bool(vibration)}_$soundIndex"
+    }
+
+    private fun bool(value: Boolean): String = if (value) "1" else "0"
+
+    private suspend fun currentChannelIds(context: Context): Pair<String, String> {
+        val settings = SettingsDataStore(context)
+        val sound = settings.isSoundEnabled.first()
+        val vibration = settings.isVibrationEnabled.first()
+        val index = settings.notificationSoundIndex.first()
+        return sittingChannelId(sound, vibration, index) to microChannelId(sound, vibration, index)
+    }
+
+    suspend fun sendSittingReminder(
+        context: Context,
+        sittingMinutes: Int,
+        vibrationEnabled: Boolean = true,
+    ) {
+        val (sittingChannelId, _) = currentChannelIds(context)
+
+        val notification = NotificationCompat.Builder(context, sittingChannelId)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle("你已经连续久坐 ${sittingMinutes} 分钟")
             .setContentText("该站起来活动一下了！")
             .setPriority(NotificationCompat.PRIORITY_HIGH)
@@ -119,42 +216,75 @@ object NotificationHelper {
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setGroup(GROUP_KEY_REMINDERS)
             .setVibrate(if (vibrationEnabled) longArrayOf(0, 300, 200, 300) else null)
-            .setFullScreenIntent(fullScreenPendingIntent, true)
-            .addAction(0, "我站起来了", standUpPendingIntent)
-            .addAction(0, "延迟5分钟", snoozePendingIntent)
-            .apply {
-                if (soundEnabled) {
-                    setSound(resolveNotificationSoundUri(context))
-                } else {
-                    setSound(null)
-                }
-            }
+            .setFullScreenIntent(fullScreenPendingIntent(context, sittingMinutes), true)
+            .addAction(0, "我站起来了", actionPendingIntent(context, ACTION_STAND_UP, 0))
+            .addAction(0, "延迟5分钟", actionPendingIntent(context, ACTION_SNOOZE, 1))
+            .setOngoing(true)
             .build()
 
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         manager.notify(NOTIFICATION_ID_SITTING, notification)
     }
 
-    suspend fun sendMicroBreakNotification(context: Context, sittingMinutes: Int, soundEnabled: Boolean = true, vibrationEnabled: Boolean = true) {
-        val notification = NotificationCompat.Builder(context, CHANNEL_MICRO_BREAK)
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+    suspend fun sendMicroBreakNotification(
+        context: Context,
+        sittingMinutes: Int,
+        vibrationEnabled: Boolean = true,
+    ) {
+        val (_, microChannelId) = currentChannelIds(context)
+
+        val notification = NotificationCompat.Builder(context, microChannelId)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle("微休息一下")
             .setContentText("你已经持续坐了 $sittingMinutes 分钟，休息一下眼睛和身体吧。")
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setAutoCancel(true)
             .setGroup(GROUP_KEY_REMINDERS)
             .setVibrate(if (vibrationEnabled) longArrayOf(0, 200, 100, 200) else null)
-            .apply {
-                if (soundEnabled) {
-                    setSound(resolveNotificationSoundUri(context))
-                } else {
-                    setSound(null)
-                }
-            }
             .build()
 
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         manager.notify(NOTIFICATION_ID_MICRO_BREAK, notification)
+    }
+
+    suspend fun sendWaterReminder(
+        context: Context,
+        vibrationEnabled: Boolean = true,
+    ) {
+        val (_, microChannelId) = currentChannelIds(context)
+
+        val notification = NotificationCompat.Builder(context, microChannelId)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle("喝杯水吧")
+            .setContentText("定时喝水，保持身体水分充足。")
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setAutoCancel(true)
+            .setGroup(GROUP_KEY_REMINDERS)
+            .setVibrate(if (vibrationEnabled) longArrayOf(0, 200, 100, 200) else null)
+            .build()
+
+        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        manager.notify(NOTIFICATION_ID_WATER, notification)
+    }
+
+    suspend fun sendEyeReminder(
+        context: Context,
+        vibrationEnabled: Boolean = true,
+    ) {
+        val (_, microChannelId) = currentChannelIds(context)
+
+        val notification = NotificationCompat.Builder(context, microChannelId)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle("护眼时间到")
+            .setContentText("20分钟了，记得看向远处休息一下眼睛。")
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setAutoCancel(true)
+            .setGroup(GROUP_KEY_REMINDERS)
+            .setVibrate(if (vibrationEnabled) longArrayOf(0, 200, 100, 200) else null)
+            .build()
+
+        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        manager.notify(NOTIFICATION_ID_EYE, notification)
     }
 
     fun buildServiceNotification(
@@ -164,7 +294,7 @@ object NotificationHelper {
         nextReminderMinutes: Int = 0,
         timerState: TimerState = TimerState.Idle,
     ): android.app.Notification {
-        val openAppIntent = Intent(context, com.sitbreak.app.MainActivity::class.java).apply {
+        val openAppIntent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
         val contentPendingIntent = PendingIntent.getActivity(
@@ -175,7 +305,7 @@ object NotificationHelper {
         )
 
         val builder = NotificationCompat.Builder(context, CHANNEL_SERVICE)
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setSmallIcon(R.drawable.ic_notification)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setOngoing(true)
             .setSilent(true)
@@ -195,69 +325,24 @@ object NotificationHelper {
                 }
                 builder.setContentText(body)
 
-                val pauseIntent = Intent(context, NotificationActionReceiver::class.java).apply {
-                    action = ACTION_PAUSE_TIMER
-                }
-                val pausePendingIntent = PendingIntent.getBroadcast(
-                    context, 10, pauseIntent,
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-                )
-                builder.addAction(0, "暂停", pausePendingIntent)
-
-                val stopIntent = Intent(context, NotificationActionReceiver::class.java).apply {
-                    action = ACTION_STOP_TIMER
-                }
-                val stopPendingIntent = PendingIntent.getBroadcast(
-                    context, 11, stopIntent,
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-                )
-                builder.addAction(0, "结束", stopPendingIntent)
+                builder.addAction(0, "暂停", actionPendingIntent(context, ACTION_PAUSE_TIMER, 10))
+                builder.addAction(0, "结束", actionPendingIntent(context, ACTION_STOP_TIMER, 11))
             }
 
             TimerState.Paused -> {
                 builder.setContentTitle("\u23F8 已暂停")
                 builder.setContentText("计时已暂停 · 已久坐 ${elapsedMinutes} 分钟")
 
-                val resumeIntent = Intent(context, NotificationActionReceiver::class.java).apply {
-                    action = ACTION_RESUME_TIMER
-                }
-                val resumePendingIntent = PendingIntent.getBroadcast(
-                    context, 10, resumeIntent,
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-                )
-                builder.addAction(0, "继续", resumePendingIntent)
-
-                val stopIntent = Intent(context, NotificationActionReceiver::class.java).apply {
-                    action = ACTION_STOP_TIMER
-                }
-                val stopPendingIntent = PendingIntent.getBroadcast(
-                    context, 11, stopIntent,
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-                )
-                builder.addAction(0, "结束", stopPendingIntent)
+                builder.addAction(0, "继续", actionPendingIntent(context, ACTION_RESUME_TIMER, 10))
+                builder.addAction(0, "结束", actionPendingIntent(context, ACTION_STOP_TIMER, 11))
             }
 
             TimerState.Reminder -> {
                 builder.setContentTitle("你已经连续久坐 ${elapsedMinutes} 分钟")
                 builder.setContentText("该站起来活动一下了！")
 
-                val standUpIntent = Intent(context, NotificationActionReceiver::class.java).apply {
-                    action = ACTION_STAND_UP
-                }
-                val standUpPendingIntent = PendingIntent.getBroadcast(
-                    context, 10, standUpIntent,
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-                )
-                builder.addAction(0, "我站起来了", standUpPendingIntent)
-
-                val snoozeIntent = Intent(context, NotificationActionReceiver::class.java).apply {
-                    action = ACTION_SNOOZE
-                }
-                val snoozePendingIntent = PendingIntent.getBroadcast(
-                    context, 11, snoozeIntent,
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-                )
-                builder.addAction(0, "延迟5分钟", snoozePendingIntent)
+                builder.addAction(0, "我站起来了", actionPendingIntent(context, ACTION_STAND_UP, 10))
+                builder.addAction(0, "延迟5分钟", actionPendingIntent(context, ACTION_SNOOZE, 11))
             }
 
             else -> {
@@ -269,22 +354,52 @@ object NotificationHelper {
         return builder.build()
     }
 
+    private fun actionPendingIntent(context: Context, action: String, requestCode: Int): PendingIntent {
+        val intent = Intent(context, TimerService::class.java).apply {
+            this.action = action
+        }
+        return PendingIntent.getForegroundService(
+            context,
+            requestCode,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+    }
+
+    private fun fullScreenPendingIntent(context: Context, sittingMinutes: Int): PendingIntent {
+        val reminderIntent = Intent(context, ReminderActivity::class.java).apply {
+            putExtra(ReminderActivity.EXTRA_SITTING_MINUTES, sittingMinutes)
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        return PendingIntent.getActivity(
+            context,
+            12,
+            reminderIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+    }
+
     private suspend fun resolveNotificationSoundUri(context: Context): Uri {
         val dataStore = NotificationSettingsDataStore(context)
         val index = dataStore.notificationSoundIndex.first()
+        return resolveNotificationSoundUri(context, index)
+    }
+
+    private suspend fun resolveNotificationSoundUri(context: Context, soundIndex: Int): Uri {
+        val dataStore = NotificationSettingsDataStore(context)
         val customUri = dataStore.notificationSoundUri.first()
 
-        if (index == 5 && customUri.isNotEmpty()) {
+        if (soundIndex == 5 && customUri.isNotEmpty()) {
             return Uri.parse(customUri)
         }
 
-        if (index in 0..4) {
+        if (soundIndex in 0..4) {
             val ringtoneManager = RingtoneManager(context)
             ringtoneManager.setType(RingtoneManager.TYPE_NOTIFICATION)
             val cursor = ringtoneManager.cursor
             try {
-                if (cursor != null && cursor.moveToPosition(index)) {
-                    return ringtoneManager.getRingtoneUri(index)
+                if (cursor != null && cursor.moveToPosition(soundIndex)) {
+                    return ringtoneManager.getRingtoneUri(soundIndex)
                 }
             } finally {
                 cursor?.close()
@@ -292,49 +407,5 @@ object NotificationHelper {
         }
 
         return RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-    }
-
-    suspend fun sendWaterReminder(context: Context, soundEnabled: Boolean = true, vibrationEnabled: Boolean = true) {
-        val notification = NotificationCompat.Builder(context, CHANNEL_MICRO_BREAK)
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
-            .setContentTitle("喝杯水吧")
-            .setContentText("定时喝水，保持身体水分充足。")
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setAutoCancel(true)
-            .setGroup(GROUP_KEY_REMINDERS)
-            .setVibrate(if (vibrationEnabled) longArrayOf(0, 200, 100, 200) else null)
-            .apply {
-                if (soundEnabled) {
-                    setSound(resolveNotificationSoundUri(context))
-                } else {
-                    setSound(null)
-                }
-            }
-            .build()
-
-        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        manager.notify(NOTIFICATION_ID_WATER, notification)
-    }
-
-    suspend fun sendEyeReminder(context: Context, soundEnabled: Boolean = true, vibrationEnabled: Boolean = true) {
-        val notification = NotificationCompat.Builder(context, CHANNEL_MICRO_BREAK)
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
-            .setContentTitle("护眼时间到")
-            .setContentText("20分钟了，记得看向远处休息一下眼睛。")
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setAutoCancel(true)
-            .setGroup(GROUP_KEY_REMINDERS)
-            .setVibrate(if (vibrationEnabled) longArrayOf(0, 200, 100, 200) else null)
-            .apply {
-                if (soundEnabled) {
-                    setSound(resolveNotificationSoundUri(context))
-                } else {
-                    setSound(null)
-                }
-            }
-            .build()
-
-        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        manager.notify(NOTIFICATION_ID_EYE, notification)
     }
 }
