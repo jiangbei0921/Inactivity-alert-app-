@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>站一站 · 久坐健康提醒助手</title>
+<title data-i18n="title">站一站 · 久坐健康提醒助手</title>
 <meta name="description" content="站一站是一款完全离线、隐私优先的 Android 久坐健康提醒应用，到点温柔提醒你起身活动，帮你把「站起来」变成习惯。" />
 <style>
   :root{
@@ -28,7 +28,9 @@
   .nav-links a:hover{color:var(--green)}
   .nav-cta{background:var(--green);color:#fff;padding:8px 16px;border-radius:999px;font-size:14px;font-weight:600}
   .nav-cta:hover{background:var(--green-dark)}
-  @media(max-width:680px){.nav-links{display:none}}
+  .lang-toggle{margin-left:14px;background:#fff;border:1px solid var(--line);color:var(--ink);padding:6px 12px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer;transition:.2s}
+  .lang-toggle:hover{border-color:var(--green);color:var(--green)}
+  @media(max-width:680px){.nav-links{display:none}.lang-toggle{margin-left:10px}}
   /* Hero */
   .hero{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center;padding:72px 0 56px}
   .eyebrow{display:inline-flex;align-items:center;gap:8px;background:var(--green-light);color:var(--green-dark);font-size:13px;font-weight:600;padding:6px 12px;border-radius:999px;margin-bottom:18px}
@@ -101,28 +103,29 @@
       <span>站一站</span>
     </div>
     <nav class="nav-links">
-      <a href="#features">功能</a>
-      <a href="#privacy">隐私</a>
-      <a href="#download">下载</a>
+      <a href="#features" data-i18n="nav_features">功能</a>
+      <a href="#privacy" data-i18n="nav_privacy">隐私</a>
+      <a href="#download" data-i18n="nav_download">下载</a>
       <a href="https://github.com/jiangbei0921/Inactivity-alert-app-" target="_blank" rel="noopener">GitHub</a>
     </nav>
-    <a class="nav-cta" href="#download">免费下载</a>
+    <a class="nav-cta" href="#download" data-i18n="nav_cta">免费下载</a>
+    <button id="langToggle" class="lang-toggle" type="button" aria-label="切换语言">EN</button>
   </div>
 </header>
 
 <section class="wrap hero">
   <div>
-    <span class="eyebrow">🟢 完全离线 · 隐私优先</span>
-    <h1>久坐太久？<br><span class="accent">站一站</span>，把健康站进每一天</h1>
-    <p class="lead">一款专为伏案人群打造的 Android 健康提醒应用。到点温柔提醒你起身活动，把你「站起来」变成习惯——数据只存在你手机里，不联网、不上传。</p>
+    <span class="eyebrow" data-i18n="eyebrow">🟢 完全离线 · 隐私优先</span>
+    <h1 data-i18n="hero_h1">久坐太久？<br><span class="accent">站一站</span>，把健康站进每一天</h1>
+    <p class="lead" data-i18n="hero_lead">一款专为伏案人群打造的 Android 健康提醒应用。到点温柔提醒你起身活动，把你「站起来」变成习惯——数据只存在你手机里，不联网、不上传。</p>
     <div class="hero-actions">
-      <a class="btn-primary" href="#download">⬇ 立即下载体验</a>
-      <a class="btn-ghost" href="https://github.com/jiangbei0921/Inactivity-alert-app-" target="_blank" rel="noopener">⭐ 在 GitHub 查看</a>
+      <a class="btn-primary" href="#download" data-i18n="btn_primary">⬇ 立即下载体验</a>
+      <a class="btn-ghost" href="https://github.com/jiangbei0921/Inactivity-alert-app-" target="_blank" rel="noopener" data-i18n="btn_ghost">⭐ 在 GitHub 查看</a>
     </div>
     <div class="badges">
       <span class="badge">Android 8.0+</span>
-      <span class="badge">无网络权限</span>
-      <span class="badge">无广告 / 无统计 SDK</span>
+      <span class="badge" data-i18n="badge2">无网络权限</span>
+      <span class="badge" data-i18n="badge3">无广告 / 无统计 SDK</span>
       <span class="badge">Kotlin + Compose</span>
     </div>
   </div>
@@ -130,13 +133,13 @@
   <div class="phone" aria-hidden="true">
     <div class="notch"></div>
     <div class="scr">
-      <div class="ring"><div class="inner"><div><b>32′</b><small>已久坐</small></div></div></div>
-      <div class="pbtn">我站起来了 ✓</div>
-      <div class="pbtn alt">推迟 5 分钟</div>
+      <div class="ring"><div class="inner"><div><b>32′</b><small data-i18n="phone_sitting">已久坐</small></div></div></div>
+      <div class="pbtn" data-i18n="phone_stand">我站起来了 ✓</div>
+      <div class="pbtn alt" data-i18n="phone_snooze">推迟 5 分钟</div>
       <div class="pstat">
-        <div><b>6</b><span>今日站立</span></div>
-        <div><b>86%</b><span>完成率</span></div>
-        <div><b>52′</b><span>活跃</span></div>
+        <div><b>6</b><span data-i18n="phone_stands">今日站立</span></div>
+        <div><b>86%</b><span data-i18n="phone_completion">完成率</span></div>
+        <div><b>52′</b><span data-i18n="phone_active">活跃</span></div>
       </div>
     </div>
   </div>
@@ -145,39 +148,39 @@
 <section class="block" id="features">
   <div class="wrap">
     <div class="sec-head">
-      <h2>核心功能</h2>
-      <p>用最低的打扰成本，帮你对抗久坐带来的健康风险。</p>
+      <h2 data-i18n="feats_head_h2">核心功能</h2>
+      <p data-i18n="feats_head_p">用最低的打扰成本，帮你对抗久坐带来的健康风险。</p>
     </div>
     <div class="features">
       <div class="feature">
         <div class="ic">⏱️</div>
-        <h3>久坐计时提醒</h3>
-        <p>前台服务持续计时，圆环一目了然；到点以通知轻提醒，到点就起身。</p>
+        <h3 data-i18n="f1_t">久坐计时提醒</h3>
+        <p data-i18n="f1_d">前台服务持续计时，圆环一目了然；到点以通知轻提醒，到点就起身。</p>
       </div>
       <div class="feature">
         <div class="ic">🚶</div>
-        <h3>真站立验证</h3>
-        <p>打卡可被步数传感器被动验证是否真起身，统计更可信（可选授权）。</p>
+        <h3 data-i18n="f2_t">真站立验证</h3>
+        <p data-i18n="f2_d">打卡可被步数传感器被动验证是否真起身，统计更可信（可选授权）。</p>
       </div>
       <div class="feature">
         <div class="ic">☕</div>
-        <h3>微休息 / 喝水 / 护眼</h3>
-        <p>可配置微休息、喝水、护眼提醒，把健康细节一起照顾到。</p>
+        <h3 data-i18n="f3_t">微休息 / 喝水 / 护眼</h3>
+        <p data-i18n="f3_d">可配置微休息、喝水、护眼提醒，把健康细节一起照顾到。</p>
       </div>
       <div class="feature">
         <div class="ic">📊</div>
-        <h3>跨日数据看板</h3>
-        <p>近 7 天、按周、按年的站立数据，看见自己的进步与坚持。</p>
+        <h3 data-i18n="f4_t">跨日数据看板</h3>
+        <p data-i18n="f4_d">近 7 天、按周、按年的站立数据，看见自己的进步与坚持。</p>
       </div>
       <div class="feature">
         <div class="ic">🌙</div>
-        <h3>智能免打扰</h3>
-        <p>通话、勿扰或全屏应用（视频/演示）时自动延后提醒，避免尴尬。</p>
+        <h3 data-i18n="f5_t">智能免打扰</h3>
+        <p data-i18n="f5_d">通话、勿扰或全屏应用（视频/演示）时自动延后提醒，避免尴尬。</p>
       </div>
       <div class="feature">
         <div class="ic">🧩</div>
-        <h3>桌面小组件</h3>
-        <p>Glance 桌面小组件，一眼查看当日站立进展，无需打开 App。</p>
+        <h3 data-i18n="f6_t">桌面小组件</h3>
+        <p data-i18n="f6_d">Glance 桌面小组件，一眼查看当日站立进展，无需打开 App。</p>
       </div>
     </div>
   </div>
@@ -186,13 +189,13 @@
 <section class="block" id="privacy">
   <div class="wrap">
     <div class="privacy">
-      <h2 style="font-size:28px;font-weight:800">你的数据，只属于你</h2>
-      <p style="color:var(--muted);margin-top:10px">我们坚信健康应用不该窥探你的生活。站一站从架构上就拒绝联网。</p>
+      <h2 style="font-size:28px;font-weight:800" data-i18n="priv_h2">你的数据，只属于你</h2>
+      <p style="color:var(--muted);margin-top:10px" data-i18n="priv_p">我们坚信健康应用不该窥探你的生活。站一站从架构上就拒绝联网。</p>
       <div class="row">
-        <div class="item"><b>0</b><span>网络请求</span></div>
-        <div class="item"><b>0</b><span>第三方 SDK</span></div>
-        <div class="item"><b>100%</b><span>本地存储</span></div>
-        <div class="item"><b>🔒</b><span>最小权限</span></div>
+        <div class="item"><b>0</b><span data-i18n="p0">网络请求</span></div>
+        <div class="item"><b>0</b><span data-i18n="p1">第三方 SDK</span></div>
+        <div class="item"><b>100%</b><span data-i18n="p2">本地存储</span></div>
+        <div class="item"><b>🔒</b><span data-i18n="p3">最小权限</span></div>
       </div>
     </div>
   </div>
@@ -201,31 +204,111 @@
 <section class="block" id="download">
   <div class="wrap">
     <div class="download">
-      <h2>下载体验</h2>
-      <p>两种方式，任选其一。安装包由 GitHub Actions 自动构建，长期稳定可用。</p>
+      <h2 data-i18n="dl_h2">下载体验</h2>
+      <p data-i18n="dl_p">两种方式，任选其一。安装包由 GitHub Actions 自动构建，长期稳定可用。</p>
       <div class="dl-grid">
         <div class="dl-card">
-          <h4>① 点击链接下载</h4>
-          <a class="big-link" href="https://github.com/jiangbei0921/Inactivity-alert-app-/releases/download/latest/app-debug.apk">⬇ 下载 app-debug.apk</a>
-          <p class="hint">手机浏览器打开即可下载，约 18 MB。</p>
+          <h4 data-i18n="dl_card1_h">① 点击链接下载</h4>
+          <a class="big-link" href="https://github.com/jiangbei0921/Inactivity-alert-app-/releases/download/latest/app-debug.apk" data-i18n="dl_card1_link">⬇ 下载 app-debug.apk</a>
+          <p class="hint" data-i18n="dl_card1_hint">手机浏览器打开即可下载，约 18 MB。</p>
         </div>
         <div class="dl-card">
-          <h4>② 扫码下载</h4>
+          <h4 data-i18n="dl_card2_h">② 扫码下载</h4>
           <div class="qr"><img src="qrcode.png" alt="扫码下载站一站 APK" /></div>
-          <p class="hint">用手机相机 / 微信扫一扫，直接下载安装。</p>
+          <p class="hint" data-i18n="dl_card2_hint">用手机相机 / 微信扫一扫，直接下载安装。</p>
         </div>
       </div>
-      <p class="dl-note">⚠️ 当前为 Debug 签名体验包，用于体验与测试；正式使用请确保使用自有签名密钥的 Release 构建。安装时若提示「未知来源」，按系统引导允许本次安装即可。</p>
+      <p class="dl-note" data-i18n="dl_note">⚠️ 当前为 Debug 签名体验包，用于体验与测试；正式使用请确保使用自有签名密钥的 Release 构建。安装时若提示「未知来源」，按系统引导允许本次安装即可。</p>
     </div>
   </div>
 </section>
 
 <footer>
   <div class="wrap">
-    <p>「站一站」· 把健康站进每一天 ｜ <a href="https://github.com/jiangbei0921/Inactivity-alert-app-" target="_blank" rel="noopener">GitHub</a> · 反馈邮箱 2185428966@qq.com</p>
-    <p style="margin-top:8px">© 2026 站一站 · 完全离线 · 隐私优先</p>
+    <p data-i18n="foot1">「站一站」· 把健康站进每一天 ｜ <a href="https://github.com/jiangbei0921/Inactivity-alert-app-" target="_blank" rel="noopener">GitHub</a> · 反馈邮箱 2185428966@qq.com</p>
+    <p style="margin-top:8px" data-i18n="foot2">© 2026 站一站 · 完全离线 · 隐私优先</p>
   </div>
 </footer>
+
+<script>
+  var I18N = {
+    zh: {
+      title: "站一站 · 久坐健康提醒助手",
+      nav_features: "功能", nav_privacy: "隐私", nav_download: "下载", nav_cta: "免费下载",
+      eyebrow: "🟢 完全离线 · 隐私优先",
+      hero_h1: "久坐太久？<br><span class=\"accent\">站一站</span>，把健康站进每一天",
+      hero_lead: "一款专为伏案人群打造的 Android 健康提醒应用。到点温柔提醒你起身活动，把你「站起来」变成习惯——数据只存在你手机里，不联网、不上传。",
+      btn_primary: "⬇ 立即下载体验", btn_ghost: "⭐ 在 GitHub 查看",
+      badge2: "无网络权限", badge3: "无广告 / 无统计 SDK",
+      phone_sitting: "已久坐", phone_stand: "我站起来了 ✓", phone_snooze: "推迟 5 分钟",
+      phone_stands: "今日站立", phone_completion: "完成率", phone_active: "活跃",
+      feats_head_h2: "核心功能", feats_head_p: "用最低的打扰成本，帮你对抗久坐带来的健康风险。",
+      f1_t: "久坐计时提醒", f1_d: "前台服务持续计时，圆环一目了然；到点以通知轻提醒，到点就起身。",
+      f2_t: "真站立验证", f2_d: "打卡可被步数传感器被动验证是否真起身，统计更可信（可选授权）。",
+      f3_t: "微休息 / 喝水 / 护眼", f3_d: "可配置微休息、喝水、护眼提醒，把健康细节一起照顾到。",
+      f4_t: "跨日数据看板", f4_d: "近 7 天、按周、按年的站立数据，看见自己的进步与坚持。",
+      f5_t: "智能免打扰", f5_d: "通话、勿扰或全屏应用（视频/演示）时自动延后提醒，避免尴尬。",
+      f6_t: "桌面小组件", f6_d: "Glance 桌面小组件，一眼查看当日站立进展，无需打开 App。",
+      priv_h2: "你的数据，只属于你", priv_p: "我们坚信健康应用不该窥探你的生活。站一站从架构上就拒绝联网。",
+      p0: "网络请求", p1: "第三方 SDK", p2: "本地存储", p3: "最小权限",
+      dl_h2: "下载体验", dl_p: "两种方式，任选其一。安装包由 GitHub Actions 自动构建，长期稳定可用。",
+      dl_card1_h: "① 点击链接下载", dl_card1_link: "⬇ 下载 app-debug.apk", dl_card1_hint: "手机浏览器打开即可下载，约 18 MB。",
+      dl_card2_h: "② 扫码下载", dl_card2_hint: "用手机相机 / 微信扫一扫，直接下载安装。",
+      dl_note: "⚠️ 当前为 Debug 签名体验包，用于体验与测试；正式使用请确保使用自有签名密钥的 Release 构建。安装时若提示「未知来源」，按系统引导允许本次安装即可。",
+      foot1: "「站一站」· 把健康站进每一天 ｜ <a href=\"https://github.com/jiangbei0921/Inactivity-alert-app-\" target=\"_blank\" rel=\"noopener\">GitHub</a> · 反馈邮箱 2185428966@qq.com",
+      foot2: "© 2026 站一站 · 完全离线 · 隐私优先"
+    },
+    en: {
+      title: "StandBreak · Sit-less Health Reminder",
+      nav_features: "Features", nav_privacy: "Privacy", nav_download: "Download", nav_cta: "Get it free",
+      eyebrow: "🟢 Fully offline · Privacy-first",
+      hero_h1: "Sitting too long?<br><span class=\"accent\">StandBreak</span> — build movement into every day",
+      hero_lead: "An Android health reminder app built for desk workers. It gently nudges you to stand and move when it's time — turning \"stand up\" into a habit. Your data stays on your phone: no network, no upload.",
+      btn_primary: "⬇ Download & try", btn_ghost: "⭐ View on GitHub",
+      badge2: "No network permission", badge3: "No ads / No analytics SDK",
+      phone_sitting: "Sitting", phone_stand: "I stood up ✓", phone_snooze: "Snooze 5 min",
+      phone_stands: "Stands today", phone_completion: "Completion", phone_active: "Active",
+      feats_head_h2: "Core features", feats_head_p: "Low-interruption reminders that help you fight the health risks of prolonged sitting.",
+      f1_t: "Sit-time reminders", f1_d: "A foreground service keeps counting; the ring shows progress at a glance. A gentle notification reminds you to stand when time's up.",
+      f2_t: "Real stand verification", f2_d: "Check-ins can be passively verified by the step sensor to confirm you actually stood — more trustworthy stats (optional permission).",
+      f3_t: "Micro-breaks / Water / Eye-care", f3_d: "Configurable micro-break, water, and eye-care reminders cover the small health details.",
+      f4_t: "Cross-day dashboard", f4_d: "Stand data over the last 7 days, by week, and by year — see your progress and consistency.",
+      f5_t: "Smart Do-Not-Disturb", f5_d: "Reminders auto-snooze during calls, DND, or full-screen apps (video/presentation) to avoid awkward moments.",
+      f6_t: "Home widget", f6_d: "A Glance home-screen widget shows today's stand progress at a glance — no need to open the app.",
+      priv_h2: "Your data belongs only to you", priv_p: "We believe a health app shouldn't spy on your life. StandBreak refuses networking by design.",
+      p0: "Network requests", p1: "3rd-party SDKs", p2: "Stored locally", p3: "Minimal permissions",
+      dl_h2: "Get the app", dl_p: "Two ways, pick either. The APK is auto-built by GitHub Actions — stable and always up to date.",
+      dl_card1_h: "① Download via link", dl_card1_link: "⬇ Download app-debug.apk", dl_card1_hint: "Open in your phone's browser to download (~18 MB).",
+      dl_card2_h: "② Scan to download", dl_card2_hint: "Use your camera or WeChat to scan and install directly.",
+      dl_note: "⚠️ This is a Debug-signed trial build for testing. For daily use, install a Release build signed with your own key. If blocked by \"Unknown sources\", allow this install when prompted.",
+      foot1: "StandBreak — movement into every day | <a href=\"https://github.com/jiangbei0921/Inactivity-alert-app-\" target=\"_blank\" rel=\"noopener\">GitHub</a> · Feedback: 2185428966@qq.com",
+      foot2: "© 2026 StandBreak · Fully offline · Privacy-first"
+    }
+  };
+  (function () {
+    var toggle = document.getElementById("langToggle");
+    function applyLang(lang) {
+      var dict = I18N[lang] || I18N.zh;
+      var nodes = document.querySelectorAll("[data-i18n]");
+      for (var i = 0; i < nodes.length; i++) {
+        var key = nodes[i].getAttribute("data-i18n");
+        if (dict[key] !== undefined) { nodes[i].innerHTML = dict[key]; }
+      }
+      document.documentElement.lang = (lang === "en") ? "en" : "zh-CN";
+      if (toggle) { toggle.textContent = (lang === "en") ? "中文" : "EN"; }
+      try { localStorage.setItem("sitbreak-lang", lang); } catch (e) {}
+    }
+    var saved = "zh";
+    try { saved = localStorage.getItem("sitbreak-lang") || "zh"; } catch (e) {}
+    applyLang(saved);
+    if (toggle) {
+      toggle.addEventListener("click", function () {
+        var cur = (document.documentElement.lang === "en") ? "en" : "zh";
+        applyLang(cur === "en" ? "zh" : "en");
+      });
+    }
+  })();
+</script>
 
 </body>
 </html>
