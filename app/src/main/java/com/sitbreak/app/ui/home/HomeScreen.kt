@@ -329,6 +329,7 @@ fun HomeScreen(
 
 @Composable
 private fun TopBar(navController: NavHostController) {
+    val ctx = LocalContext.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -351,7 +352,6 @@ private fun TopBar(navController: NavHostController) {
             icon = Icons.Outlined.Notifications,
             contentDescription = stringResource(R.string.a11y_open_notification_settings),
             onClick = {
-                val ctx = LocalContext.current
                 val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
                     putExtra(Settings.EXTRA_APP_PACKAGE, ctx.packageName)
                 }
