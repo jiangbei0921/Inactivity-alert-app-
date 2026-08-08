@@ -118,7 +118,7 @@ fun HomeScreen(
     ) {
         item { NotificationPermissionBanner() }
         item { StepVerificationBanner() }
-        item { TopBar() }
+        item { TopBar(navController) }
         item { Spacer(modifier = Modifier.height(20.dp)) }
 
         if (timerState == TimerState.Idle) {
@@ -328,7 +328,7 @@ fun HomeScreen(
 }
 
 @Composable
-private fun TopBar() {
+private fun TopBar(navController: NavHostController) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
