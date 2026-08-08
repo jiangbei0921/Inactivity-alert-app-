@@ -33,15 +33,11 @@
 
 ## 🌐 产品官网
 
-想要更直观地了解「站一站」并下载体验？我们做了一个**产品官网**：[index.html](index.html)（仓库根目录，可直接用浏览器打开）。
+想要更直观地了解「站一站」并下载体验？请访问产品官网：
 
-- 💻 **电脑预览**：打开 [index.html](index.html) 查看产品介绍与功能演示。
-- ⬇️ **直接下载**：[app-debug.apk](https://github.com/jiangbei0921/Inactivity-alert-app-/releases/download/latest/app-debug.apk)
-- 📱 **扫码下载**：
+🔗 **[https://c6ec35d2328a41cab277d33bfa690546.bj9.agentos-app.net](https://c6ec35d2328a41cab277d33bfa690546.bj9.agentos-app.net)**
 
-![扫码下载站一站 APK](qrcode.png)
-
-> 官网为纯静态页面，无任何外部依赖；二维码扫描后直接下载最新 APK。
+官网为纯静态页面，支持 **中文 / English** 一键切换，可直接下载最新 APK。
 
 ---
 
