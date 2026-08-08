@@ -9,6 +9,7 @@ import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.sitbreak.app.MainActivity
+import com.sitbreak.app.R
 import com.sitbreak.app.TimerState
 import com.sitbreak.app.TimerStateHolder
 import com.sitbreak.app.data.CheckInRepository
@@ -18,7 +19,9 @@ import com.sitbreak.app.data.db.CheckInRecord
 import com.sitbreak.app.detector.SmartDetector
 import com.sitbreak.app.health.StandingValidator
 import com.sitbreak.app.notification.NotificationHelper
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
+import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
@@ -28,7 +31,14 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
+@AndroidEntryPoint
 class TimerService : Service() {
+
+    @Inject
+    lateinit var notificationHelper: NotificationHelper
+
+    @Inject
+    lateinit var smartDetector: SmartDetector
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var tickJob: Job? = null
@@ -62,7 +72,7 @@ class TimerService : Service() {
         super.onCreate()
         settingsDataStore = SettingsDataStore(this)
         repository = CheckInRepository(AppDatabase.getInstance(this).checkInDao())
-        scope.launch { NotificationHelper.createChannels(this@TimerService) }
+        scope.launch { notificationHelper.createChannels(this@TimerService) }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -103,7 +113,7 @@ class TimerService : Service() {
         )
 
         val notification = NotificationCompat.Builder(this, NotificationHelper.CHANNEL_SERVICE)
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle("站一站 计时中")
             .setContentText("正在监测久坐时间")
             .setPriority(NotificationCompat.PRIORITY_LOW)
@@ -220,7 +230,7 @@ class TimerService : Service() {
         updateServiceNotification(sittingElapsed.toInt())
 
         if (!sittingReminderSent && sittingElapsed >= sittingIntervalMinutes) {
-            val delayMinutes = SmartDetector.checkShouldDelay(this)
+            val delayMinutes = smartDetector.checkShouldDelay(this)
             if (delayMinutes > 0) {
                 sittingStartTime = sittingStartTime + delayMinutes * 60_000L
                 settingsDataStore.setSittingStartTime(sittingStartTime)
@@ -228,30 +238,30 @@ class TimerService : Service() {
                 sittingReminderSent = true
                 sittingReminderSentTime = now
                 TimerStateHolder.setState(TimerState.Reminder)
-                NotificationHelper.sendSittingReminder(this, sittingElapsed.toInt(), isVibrationEnabled)
+                notificationHelper.sendSittingReminder(this, sittingElapsed.toInt(), isVibrationEnabled)
             }
         }
 
         // C9：周期提醒——若已发送久坐提醒但用户未处理，每 5 分钟重复提醒一次
         if (sittingReminderSent && now - sittingReminderSentTime >= SITTING_REMINDER_REPEAT_MS) {
             sittingReminderSentTime = now
-            NotificationHelper.sendSittingReminder(this, sittingElapsed.toInt(), isVibrationEnabled)
+            notificationHelper.sendSittingReminder(this, sittingElapsed.toInt(), isVibrationEnabled)
         }
 
         if (isMicroBreakEnabled && !microBreakReminderSent && microBreakElapsed >= microBreakIntervalMinutes) {
             microBreakReminderSent = true
-            NotificationHelper.sendMicroBreakNotification(this, microBreakElapsed.toInt(), isVibrationEnabled)
+            notificationHelper.sendMicroBreakNotification(this, microBreakElapsed.toInt(), isVibrationEnabled)
         }
 
         val waterElapsed = (now - waterReminderStartTime) / 60_000
         if (isWaterReminderEnabled && waterElapsed >= WATER_REMINDER_INTERVAL_MIN) {
-            NotificationHelper.sendWaterReminder(this, isVibrationEnabled)
+            notificationHelper.sendWaterReminder(this, isVibrationEnabled)
             waterReminderStartTime = now
         }
 
         val eyeElapsed = (now - eyeReminderStartTime) / 60_000
         if (isEyeReminderEnabled && eyeElapsed >= EYE_REMINDER_INTERVAL_MIN) {
-            NotificationHelper.sendEyeReminder(this, isVibrationEnabled)
+            notificationHelper.sendEyeReminder(this, isVibrationEnabled)
             eyeReminderStartTime = now
         }
     }
@@ -383,7 +393,7 @@ class TimerService : Service() {
         } else {
             0
         }
-        val notification = NotificationHelper.buildServiceNotification(
+        val notification = notificationHelper.buildServiceNotification(
             context = this,
             elapsedMinutes = elapsedMinutes,
             todayStandCount = todayStandCount,

@@ -4,7 +4,7 @@
 [![Platform](https://img.shields.io/badge/platform-Android-green.svg)](https://www.android.com/)
 ![Min SDK](https://img.shields.io/badge/minSdk-26%20(Android%208.0)-blue.svg)
 ![Target SDK](https://img.shields.io/badge/targetSdk-34%20(Android%2014)-blue.svg)
-[![License](https://img.shields.io/badge/license-未声明-critical.svg)](#许可证)
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
 > 一款专为久坐人群设计的 Android 健康提醒应用：在专注工作时，定时温柔地提醒你起身活动，帮你把「站起来」变成习惯。
 
@@ -19,8 +19,10 @@
 - [安装步骤](#安装步骤)
 - [使用说明](#使用说明)
 - [技术栈](#技术栈)
+- [架构设计](#架构设计)
 - [目录结构](#目录结构)
 - [工作原理](#工作原理)
+- [测试与质量保障](#测试与质量保障)
 - [🔒 安全与隐私](#-安全与隐私)
 - [贡献指南](#贡献指南)
 - [许可证](#许可证)
@@ -149,15 +151,105 @@ powershell -ExecutionPolicy Bypass -File .\run.ps1
 | 语言 | Kotlin | 1.9.22 |
 | UI 框架 | Jetpack Compose + Material 3 | BOM 2024.02.00 |
 | 架构 | MVVM（ViewModel + StateFlow） | — |
+| 依赖注入 | Hilt / Dagger | 2.50 |
 | 数据库 | Room | 2.6.1 |
 | 键值存储 | DataStore Preferences | 1.0.0 |
 | 导航 | Navigation Compose | 2.7.7 |
 | 后台服务 | Foreground Service | — |
+| 后台任务 | WorkManager（每日小结） | 2.9.0 |
 | 通知 | NotificationCompat（渠道化） | — |
 | 小组件 | Glance AppWidget | 1.0.0 |
 | 权限封装 | Accompanist Permissions | 0.34.0 |
+| 单元测试 | JUnit4 + MockK + Turbine + coroutines-test | 4.13.2 / 1.13.9 / 1.0.0 |
+| 国际化 | `values`（zh）+ `values-en`（en） | — |
 | 构建 | Android Gradle Plugin + Gradle | AGP 8.2.2 / Gradle 8.5 |
 | 最低 / 目标 | Android API | minSdk 26 / targetSdk 34 |
+
+---
+
+## 架构设计
+
+分层遵循单向数据流：**UI 只读状态、只发事件；状态的唯一真源在 Service 与 DataStore/Room**。
+
+```mermaid
+flowchart TD
+    subgraph UI["UI 层 · Jetpack Compose"]
+        Home["HomeScreen"]
+        Stats["StatsScreen"]
+        Settings["SettingsScreen"]
+        Onboard["OnboardingScreen"]
+    end
+
+    subgraph VM["表现层 · ViewModel (@HiltViewModel)"]
+        HomeVM["HomeViewModel"]
+        StatsVM["StatsViewModel"]
+        SettingsVM["SettingsViewModel"]
+        OnboardVM["OnboardingViewModel"]
+    end
+
+    subgraph DOMAIN["领域逻辑 · 纯 Kotlin，可 100% 单测"]
+        Calc["HomeStatsCalculator<br/>完成率 / 活动时长"]
+        Sched["DailySummarySchedule<br/>调度时刻计算"]
+        Copy["ReminderCopywriter<br/>提醒文案"]
+    end
+
+    subgraph DATA["数据层"]
+        Repo["CheckInRepository"]
+        Room[("Room<br/>check_in_records")]
+        DS[("DataStore<br/>timer / notification /<br/>reminder / app_state")]
+    end
+
+    subgraph BG["后台 · 状态真源"]
+        Svc["TimerService<br/>前台服务，15s 心跳"]
+        Holder["TimerStateHolder<br/>StateFlow&lt;TimerState&gt;"]
+        Worker["DailySummaryWorker<br/>WorkManager 周期任务"]
+    end
+
+    subgraph SYS["系统能力"]
+        Notif["NotificationHelper<br/>渠道化通知"]
+        Detect["SmartDetector<br/>勿扰 / 通话 / 全屏"]
+        Sensor["StandingValidator<br/>TYPE_STEP_COUNTER"]
+        Widget["SitBreakWidget<br/>Glance"]
+    end
+
+    Home --> HomeVM
+    Stats --> StatsVM
+    Settings --> SettingsVM
+    Onboard --> OnboardVM
+
+    HomeVM --> Calc
+    HomeVM --> Repo
+    HomeVM --> DS
+    StatsVM --> Repo
+    SettingsVM --> DS
+    OnboardVM --> DS
+
+    Repo --> Room
+    DS -.读写.-> Svc
+
+    Holder -- "状态广播" --> HomeVM
+    Svc --> Holder
+    Svc --> Notif
+    Svc --> Detect
+    Svc --> Sensor
+    Svc --> Repo
+    Svc --> Widget
+
+    HomeVM -- "startTimer / onStandUp" --> Svc
+    Worker --> Sched
+    Worker --> Repo
+    Worker --> Notif
+```
+
+关键设计取舍（完整记录见 [`docs/ARCHITECTURE_DECISIONS.md`](docs/ARCHITECTURE_DECISIONS.md)）：
+
+| 决策 | 选择 | 核心理由 |
+|------|------|----------|
+| 计时状态放哪 | 前台 Service + `TimerStateHolder` | Activity 可能被回收，ViewModel 不能作为跨进程存活的真源 |
+| 依赖注入 | Hilt（`@HiltViewModel` / `@AndroidEntryPoint`） | 消除 `AndroidViewModel` 里手搓单例，ViewModel 可脱离 Context 构造从而可测 |
+| 后台小结 | WorkManager 而非 AlarmManager | 可延迟任务，交给系统合并唤醒；重启后调度自动保留 |
+| 站立验证 | 本机 `TYPE_STEP_COUNTER` 阈值判定 | 不联网、不引入模型，权限缺失时安全降级为「不可用」 |
+| 统计口径 | 抽成 `HomeStatsCalculator` 纯函数 | 除零 / 负值 / 截断这些边界能用 JVM 单测锁死 |
 
 ---
 
@@ -165,11 +257,15 @@ powershell -ExecutionPolicy Bypass -File .\run.ps1
 
 ```
 com.sitbreak.app
-├── MainActivity.kt                  # 应用入口 Activity
-├── TimerState.kt                    # 计时状态定义
+├── SitBreakApplication.kt           # Hilt 入口 + 注册每日小结周期任务
+├── MainActivity.kt                  # 应用入口 Activity（@AndroidEntryPoint）
+├── TimerState.kt                    # 计时状态定义 + TimerStateHolder
+├── di/
+│   └── AppModule.kt                 # Hilt 单例：DataStore / Repository / Validator
 ├── data/
 │   ├── CheckInRepository.kt         # 打卡数据仓库（业务逻辑入口）
 │   ├── SettingsDataStore.kt         # 设置门面（聚合多个 DataStore）
+│   ├── AppStateDataStore.kt         # 应用级一次性状态（首启引导标记）
 │   ├── NotificationSettingsDataStore.kt
 │   ├── ReminderSettingsDataStore.kt # 含全屏应用黑名单（智能免打扰）
 │   ├── TimerSettingsDataStore.kt
@@ -190,18 +286,28 @@ com.sitbreak.app
 ├── service/
 │   ├── TimerService.kt              # 前台服务：后台计时核心
 │   └── TimeUtils.kt                 # 本地时区/工作时段工具
+├── health/
+│   └── StandingValidator.kt         # 步数传感器被动验证「是否真站起来」
 ├── ui/
 │   ├── activity/                    # 活动/健康中心详情页
 │   ├── components/                  # 通用 UI 组件
 │   ├── help/                        # 帮助与反馈
-│   ├── home/                        # 主页（计时 + ViewModel）
+│   ├── home/                        # 主页（计时 + ViewModel + HomeStatsCalculator）
+│   ├── onboarding/                  # 首启引导（三页 + 完成标记落盘）
 │   ├── reminder/                    # 全屏提醒 Activity
 │   ├── settings/                    # 设置页
 │   ├── splash/                      # 启动页
 │   ├── stats/                       # 统计页
 │   └── theme/                       # 主题与配色
+├── work/
+│   ├── DailySummaryWorker.kt        # 每日小结 CoroutineWorker
+│   └── DailySummarySchedule.kt      # 调度时刻计算（纯 Kotlin，可单测）
 └── widget/
     └── SitBreakWidget.kt            # 桌面小组件（Glance）
+
+app/src/main/res/
+├── values/strings.xml               # 中文（默认）
+└── values-en/strings.xml            # 英文
 ```
 
 ---
@@ -223,6 +329,38 @@ com.sitbreak.app
     → 用户退出 App
         → onTaskRemoved 清除计时状态（下次需重新计时）
 ```
+
+---
+
+## 测试与质量保障
+
+```bash
+./gradlew testDebugUnitTest   # 单元测试（CI 门禁，失败即阻断）
+./gradlew lintDebug           # Android Lint
+./gradlew assembleDebug       # Debug 包
+./gradlew assembleRelease     # Release 包（R8 混淆 + 资源压缩）
+```
+
+**单元测试覆盖的模块**
+
+| 测试类 | 覆盖点 |
+|--------|--------|
+| `HomeStatsCalculatorTest` | 完成率/活动时长的除零、负值、上限截断、目标不可计算 |
+| `DailySummaryScheduleTest` | 每日小结触发时刻的跨天与边界，保证延迟非负 |
+| `TimerStateHolderTest` | 计时状态机的 Flow 发射序列与去重（Turbine） |
+| `StandingValidatorTest` | 无传感器/无权限时的安全降级（MockK） |
+| `NotificationHelperTest` | 通知渠道 / ID / Action 常量唯一性 |
+| `SettingsDataStoreTest`、`ReminderCopywriterTest` | 设置默认值与文案池 |
+
+**CI 流水线**（`.github/workflows/android-build.yml`，推送 `main` 与所有 PR 触发）
+
+1. `actions/cache` 缓存 Gradle 依赖与 wrapper
+2. `testDebugUnitTest` —— **测试不通过直接失败，不产出包**
+3. `lintDebug` —— 静态检查（`continue-on-error`，只做提示不阻断）
+4. `assembleDebug` —— 构建产物
+5. 仅 `main` 分支：把 APK 发布到 `latest` release
+
+**Release 构建**已启用 `isMinifyEnabled` + `isShrinkResources`；签名信息从环境变量（`SIGNING_KEYSTORE` 等）读取，**不落库**，未配置时自动跳过签名配置以保证任何人 clone 后都能直接构建。
 
 ---
 
@@ -292,8 +430,9 @@ com.sitbreak.app
 
 ## 许可证
 
-> ⚠️ 本仓库**目前尚未包含 LICENSE 文件**。在明确许可证之前，默认不向他人授予使用、修改或分发的权利。
-> 为符合开源规范、便于他人合法使用与贡献，建议尽快添加许可证（如 `MIT`）。如需，可协助补一份 `LICENSE`。
+本项目采用 [Apache License 2.0](LICENSE)。
+
+选择 Apache-2.0 而非 MIT：它在同样宽松的前提下，额外给出**显式专利授权**与**商标限制**条款，对可能被企业内部使用的健康类工具更安全，也与 Android 生态（AOSP、Jetpack 均为 Apache-2.0）保持一致。
 
 ---
 

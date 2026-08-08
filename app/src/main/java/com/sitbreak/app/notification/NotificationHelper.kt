@@ -11,32 +11,38 @@ import android.net.Uri
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.sitbreak.app.MainActivity
+import com.sitbreak.app.R
 import com.sitbreak.app.TimerState
 import com.sitbreak.app.data.NotificationSettingsDataStore
 import com.sitbreak.app.data.SettingsDataStore
 import com.sitbreak.app.service.TimerService
 import com.sitbreak.app.ui.reminder.ReminderActivity
 import kotlinx.coroutines.flow.first
+import javax.inject.Inject
 
-object NotificationHelper {
+class NotificationHelper @Inject constructor() {
 
-    const val CHANNEL_SERVICE = "timer_service"
-    const val CHANNEL_SITTING_REMINDER = "sitting_reminder"
-    const val CHANNEL_MICRO_BREAK = "micro_break"
+    companion object {
+        const val CHANNEL_SERVICE = "timer_service"
+        const val CHANNEL_SITTING_REMINDER = "sitting_reminder"
+        const val CHANNEL_MICRO_BREAK = "micro_break"
+        const val CHANNEL_DAILY_SUMMARY = "daily_summary"
 
-    private const val GROUP_KEY_REMINDERS = "sitbreak_reminders"
+        private const val GROUP_KEY_REMINDERS = "sitbreak_reminders"
 
-    const val NOTIFICATION_ID_SITTING = 1001
-    const val NOTIFICATION_ID_MICRO_BREAK = 1002
-    const val NOTIFICATION_ID_SERVICE = 1003
-    const val NOTIFICATION_ID_WATER = 1004
-    const val NOTIFICATION_ID_EYE = 1005
+        const val NOTIFICATION_ID_SITTING = 1001
+        const val NOTIFICATION_ID_MICRO_BREAK = 1002
+        const val NOTIFICATION_ID_SERVICE = 1003
+        const val NOTIFICATION_ID_WATER = 1004
+        const val NOTIFICATION_ID_EYE = 1005
+        const val NOTIFICATION_ID_DAILY_SUMMARY = 1006
 
-    const val ACTION_STAND_UP = "com.sitbreak.app.ACTION_STAND_UP"
-    const val ACTION_SNOOZE = "com.sitbreak.app.ACTION_SNOOZE"
-    const val ACTION_PAUSE_TIMER = "com.sitbreak.app.ACTION_PAUSE_TIMER"
-    const val ACTION_RESUME_TIMER = "com.sitbreak.app.ACTION_RESUME_TIMER"
-    const val ACTION_STOP_TIMER = "com.sitbreak.app.ACTION_STOP_TIMER"
+        const val ACTION_STAND_UP = "com.sitbreak.app.ACTION_STAND_UP"
+        const val ACTION_SNOOZE = "com.sitbreak.app.ACTION_SNOOZE"
+        const val ACTION_PAUSE_TIMER = "com.sitbreak.app.ACTION_PAUSE_TIMER"
+        const val ACTION_RESUME_TIMER = "com.sitbreak.app.ACTION_RESUME_TIMER"
+        const val ACTION_STOP_TIMER = "com.sitbreak.app.ACTION_STOP_TIMER"
+    }
 
     private val audioAttributes by lazy {
         AudioAttributes.Builder()
@@ -108,6 +114,51 @@ object NotificationHelper {
                 setShowBadge(false)
             }
         )
+
+        // 每日小结属于「可以静默错过」的信息，用 LOW 重要度，不响铃不震动
+        manager.createNotificationChannel(
+            NotificationChannel(
+                CHANNEL_DAILY_SUMMARY,
+                "每日小结",
+                NotificationManager.IMPORTANCE_LOW,
+            ).apply {
+                description = "每天汇总昨天的站立情况"
+                setShowBadge(false)
+            }
+        )
+    }
+
+    /**
+     * 每日小结通知，由 [com.sitbreak.app.work.DailySummaryWorker] 触发。
+     * 与提醒类通知刻意分渠道，用户可以只关掉小结而保留提醒。
+     */
+    fun sendDailySummary(context: Context, standCount: Int, activeMinutes: Int) {
+        val title = if (standCount > 0) "昨天站起来了 $standCount 次" else "昨天一次都没站起来"
+        val text = if (standCount > 0) {
+            "累计活动约 $activeMinutes 分钟，今天继续保持 👍"
+        } else {
+            "今天给自己定个小目标：先站 3 次。"
+        }
+
+        val notification = NotificationCompat.Builder(context, CHANNEL_DAILY_SUMMARY)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle(title)
+            .setContentText(text)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(text))
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setAutoCancel(true)
+            .setContentIntent(
+                PendingIntent.getActivity(
+                    context,
+                    2001,
+                    Intent(context, MainActivity::class.java),
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+                )
+            )
+            .build()
+
+        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        manager.notify(NOTIFICATION_ID_DAILY_SUMMARY, notification)
     }
 
     private suspend fun buildReminderChannel(
@@ -157,7 +208,7 @@ object NotificationHelper {
         val (sittingChannelId, _) = currentChannelIds(context)
 
         val notification = NotificationCompat.Builder(context, sittingChannelId)
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle("你已经连续久坐 ${sittingMinutes} 分钟")
             .setContentText("该站起来活动一下了！")
             .setPriority(NotificationCompat.PRIORITY_HIGH)
@@ -183,7 +234,7 @@ object NotificationHelper {
         val (_, microChannelId) = currentChannelIds(context)
 
         val notification = NotificationCompat.Builder(context, microChannelId)
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle("微休息一下")
             .setContentText("你已经持续坐了 $sittingMinutes 分钟，休息一下眼睛和身体吧。")
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
@@ -203,7 +254,7 @@ object NotificationHelper {
         val (_, microChannelId) = currentChannelIds(context)
 
         val notification = NotificationCompat.Builder(context, microChannelId)
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle("喝杯水吧")
             .setContentText("定时喝水，保持身体水分充足。")
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
@@ -223,7 +274,7 @@ object NotificationHelper {
         val (_, microChannelId) = currentChannelIds(context)
 
         val notification = NotificationCompat.Builder(context, microChannelId)
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle("护眼时间到")
             .setContentText("20分钟了，记得看向远处休息一下眼睛。")
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
@@ -254,7 +305,7 @@ object NotificationHelper {
         )
 
         val builder = NotificationCompat.Builder(context, CHANNEL_SERVICE)
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setSmallIcon(R.drawable.ic_notification)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setOngoing(true)
             .setSilent(true)

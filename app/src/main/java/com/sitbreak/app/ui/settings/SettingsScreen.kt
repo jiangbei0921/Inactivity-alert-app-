@@ -70,7 +70,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.sitbreak.app.ui.components.SectionHeader
 import com.sitbreak.app.notification.ReminderCopywriter
 import com.sitbreak.app.ui.components.SettingRow
@@ -119,7 +119,7 @@ private val ALL_DAYS_KEYS = setOf("MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(viewModel: SettingsViewModel = viewModel()) {
+fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
     val sittingInterval by viewModel.sittingIntervalMinutes.collectAsState()
     val microBreakInterval by viewModel.microBreakIntervalMinutes.collectAsState()
     val isMicroBreakEnabled by viewModel.isMicroBreakEnabled.collectAsState()

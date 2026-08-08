@@ -7,8 +7,9 @@ import android.content.Context
 import android.telephony.TelephonyManager
 import com.sitbreak.app.data.ReminderSettingsDataStore
 import kotlinx.coroutines.flow.first
+import javax.inject.Inject
 
-object SmartDetector {
+class SmartDetector @Inject constructor() {
 
     suspend fun checkShouldDelay(context: Context): Int {
         if (isDoNotDisturbOn(context)) {

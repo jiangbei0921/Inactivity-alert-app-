@@ -39,6 +39,7 @@ import com.sitbreak.app.ui.help.HelpDetailScreen
 import com.sitbreak.app.ui.activity.HealthCenterScreen
 import com.sitbreak.app.ui.activity.ActivityDetailScreen
 import com.sitbreak.app.ui.home.HomeScreen
+import com.sitbreak.app.ui.onboarding.OnboardingScreen
 import com.sitbreak.app.ui.splash.SplashScreen
 import com.sitbreak.app.ui.stats.StatsScreen
 import com.sitbreak.app.ui.settings.SettingsScreen
@@ -49,6 +50,7 @@ import com.sitbreak.app.ui.theme.TextTertiary
 
 object Routes {
     const val SPLASH = "splash"
+    const val ONBOARDING = "onboarding"
     const val HOME = "home"
     const val STATS = "stats"
     const val SETTINGS = "settings"
@@ -111,11 +113,13 @@ fun MainNavHost() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
-    val isSplash = currentDestination?.route == Routes.SPLASH
+    // 启动页与首启引导页占满全屏，不显示底部导航
+    val isFullScreenRoute = currentDestination?.route == Routes.SPLASH ||
+        currentDestination?.route == Routes.ONBOARDING
 
     Scaffold(
         bottomBar = {
-            if (!isSplash) {
+            if (!isFullScreenRoute) {
                 NavigationBar(
                     containerColor = CardBackground,
                     tonalElevation = 0.dp,
@@ -192,8 +196,20 @@ fun MainNavHost() {
             composable(Routes.SPLASH) {
                 SplashScreen(
                     onFinish = {
-                        navController.navigate(Routes.HOME) {
+                        navController.navigate(Routes.ONBOARDING) {
                             popUpTo(Routes.SPLASH) {
+                                inclusive = true
+                            }
+                        }
+                    }
+                )
+            }
+            composable(Routes.ONBOARDING) {
+                // 老用户在此路由内被立即透传到主页，不会看到任何引导内容
+                OnboardingScreen(
+                    onDone = {
+                        navController.navigate(Routes.HOME) {
+                            popUpTo(Routes.ONBOARDING) {
                                 inclusive = true
                             }
                         }

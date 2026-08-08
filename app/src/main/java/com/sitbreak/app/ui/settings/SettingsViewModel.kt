@@ -1,8 +1,11 @@
 package com.sitbreak.app.ui.settings
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import android.content.Context
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
 import com.sitbreak.app.data.SettingsDataStore
 import com.sitbreak.app.notification.NotificationHelper
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,9 +16,12 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.launch
 
-class SettingsViewModel(application: Application) : AndroidViewModel(application) {
-
-    private val settingsDataStore = SettingsDataStore(application)
+@HiltViewModel
+class SettingsViewModel @Inject constructor(
+    @ApplicationContext private val appContext: Context,
+    private val settingsDataStore: SettingsDataStore,
+    private val notificationHelper: NotificationHelper,
+) : ViewModel() {
 
     private val _sittingIntervalMinutes = MutableStateFlow(1)
     val sittingIntervalMinutes: StateFlow<Int> = _sittingIntervalMinutes.asStateFlow()
@@ -197,6 +203,6 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     }
 
     private suspend fun recreateChannels() {
-        NotificationHelper.createChannels(getApplication())
+        notificationHelper.createChannels(appContext)
     }
 }

@@ -57,10 +57,15 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.progressBarRangeInfo
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
@@ -83,7 +88,7 @@ import java.util.Date
 import java.util.Locale
 
 @Composable
-fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
+fun HomeScreen(viewModel: HomeViewModel = hiltViewModel()) {
     val timerState by viewModel.timerState.collectAsState()
     val elapsedSeconds by viewModel.elapsedSeconds.collectAsState()
     val targetSeconds by viewModel.targetSeconds.collectAsState()
@@ -499,11 +504,24 @@ private fun CircularTimer(
 
     val minutes = elapsedSeconds / 60
     val seconds = elapsedSeconds % 60
-    val timeText = String.format("%02d:%02d", minutes, seconds)
+    val timeText = String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds)
     val targetText = stringResource(R.string.home_target_time, targetSeconds / 60, targetSeconds % 60)
 
+    // 圆环由 Canvas 绘制、时间文本被拆成多个 Text，TalkBack 逐条朗读会非常割裂。
+    // 这里把整个圆环合并成一个语义节点，并暴露进度条区间信息。
+    val timerDescription = stringResource(
+        R.string.a11y_timer_progress,
+        minutes,
+        seconds,
+        targetSeconds / 60,
+        (progress.coerceIn(0f, 1f) * 100).toInt(),
+    )
+
     Box(
-        modifier = modifier,
+        modifier = modifier.semantics(mergeDescendants = true) {
+            contentDescription = timerDescription
+            progressBarRangeInfo = ProgressBarRangeInfo(progress.coerceIn(0f, 1f), 0f..1f)
+        },
         contentAlignment = Alignment.Center,
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
@@ -620,12 +638,13 @@ private fun NotificationPermissionBanner() {
 
     val context = LocalContext.current
     val activity = context as? ComponentActivity
+    val openLabel = stringResource(R.string.a11y_open_notification_settings)
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .background(Color(0xFFFEF9C3))
             .padding(horizontal = 16.dp, vertical = 10.dp)
-            .clickable {
+            .clickable(onClickLabel = openLabel, role = Role.Button) {
                 val shouldShowRationale = activity?.shouldShowRequestPermissionRationale(
                     android.Manifest.permission.POST_NOTIFICATIONS
                 ) ?: true
@@ -666,12 +685,13 @@ private fun StepVerificationBanner() {
     if (permissionState.status.isGranted) return
 
     val activity = context as? ComponentActivity
+    val openLabel = stringResource(R.string.a11y_open_activity_permission)
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .background(Color(0xFFE0F2FE))
             .padding(horizontal = 16.dp, vertical = 10.dp)
-            .clickable {
+            .clickable(onClickLabel = openLabel, role = Role.Button) {
                 val shouldShowRationale = activity?.shouldShowRequestPermissionRationale(
                     android.Manifest.permission.ACTIVITY_RECOGNITION
                 ) ?: true

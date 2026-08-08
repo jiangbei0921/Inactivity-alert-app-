@@ -1,13 +1,15 @@
 package com.sitbreak.app.ui.home
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import android.content.Context
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
 import com.sitbreak.app.TimerState
 import com.sitbreak.app.TimerStateHolder
 import com.sitbreak.app.data.CheckInRepository
 import com.sitbreak.app.data.SettingsDataStore
-import com.sitbreak.app.data.db.AppDatabase
 import com.sitbreak.app.data.db.CheckInRecord
 import com.sitbreak.app.service.TimerService
 import com.sitbreak.app.health.StandingValidator
@@ -20,10 +22,13 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
-class HomeViewModel(application: Application) : AndroidViewModel(application) {
-
-    private val settingsDataStore = SettingsDataStore(application)
-    private val repository = CheckInRepository(AppDatabase.getInstance(application).checkInDao())
+@HiltViewModel
+class HomeViewModel @Inject constructor(
+    @ApplicationContext private val appContext: Context,
+    private val settingsDataStore: SettingsDataStore,
+    private val repository: CheckInRepository,
+    private val standingValidator: StandingValidator,
+) : ViewModel() {
 
     val timerState: StateFlow<TimerState> = TimerStateHolder.state
 
@@ -62,7 +67,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             val startTime = settingsDataStore.sittingStartTime.first()
             if (startTime > 0L) {
                 TimerStateHolder.setState(TimerState.Running)
-                TimerService.start(getApplication())
+                TimerService.start(appContext)
             }
         }
     }
@@ -114,7 +119,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             val interval = settingsDataStore.sittingIntervalMinutes.first()
             _targetSeconds.value = interval * 60
 
-            TimerService.start(getApplication())
+            TimerService.start(appContext)
         }
     }
 
@@ -130,9 +135,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     fun onStandUp() {
         // 本地直接依据传感器状态判断本次计时是否检测到起身活动，
         // 避免跨进程延迟读取 TimerStateHolder 导致的竞态（此前依赖 delay 轮询，不可靠）
-        val verified = StandingValidator.standingLikely()
+        val verified = standingValidator.standingLikely()
         _lastStandVerified.value = verified
-        TimerService.onStandUp(getApplication())
+        TimerService.onStandUp(appContext)
         _elapsedSeconds.value = 0
         TimerStateHolder.setState(TimerState.Completed)
         viewModelScope.launch {
@@ -151,7 +156,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun onSnooze() {
-        TimerService.onSnooze(getApplication())
+        TimerService.onSnooze(appContext)
         _elapsedSeconds.value = 0
         TimerStateHolder.setState(TimerState.Running)
         viewModelScope.launch {
@@ -161,17 +166,17 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun onPause() {
-        TimerService.onPause(getApplication())
+        TimerService.onPause(appContext)
         TimerStateHolder.setState(TimerState.Paused)
     }
 
     fun onResume() {
-        TimerService.onResume(getApplication())
+        TimerService.onResume(appContext)
         TimerStateHolder.setState(TimerState.Running)
     }
 
     fun onStop() {
-        TimerService.onStop(getApplication())
+        TimerService.onStop(appContext)
         _elapsedSeconds.value = 0
         TimerStateHolder.setState(TimerState.Idle)
         refreshStats()
@@ -182,15 +187,15 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         val standCount = repository.getTodayStandCount(startOfDay, endOfDay)
         _todayStandCount.value = standCount
 
-        val workingHours = workEndHour - workStartHour
-        if (workingHours > 0) {
-            val targetStands = (workingHours * 60) / intervalMinutes
-            if (targetStands > 0) {
-                _todayCompletionRate.value = (standCount.toFloat() / targetStands).coerceAtMost(1f)
-            }
-        }
+        _todayCompletionRate.value = HomeStatsCalculator.completionRate(
+            standCount = standCount,
+            workStartHour = workStartHour,
+            workEndHour = workEndHour,
+            intervalMinutes = intervalMinutes,
+            fallback = _todayCompletionRate.value,
+        )
 
-        _todayActiveHours.value = standCount * 3f / 60f
+        _todayActiveHours.value = HomeStatsCalculator.activeHours(standCount)
 
         val records = repository.getTodayRecords(startOfDay, endOfDay)
         _todayRecords.value = records

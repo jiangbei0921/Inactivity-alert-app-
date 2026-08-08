@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SitBreak</string>
+
+    <!-- Bottom Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_stats">Stats</string>
+    <string name="nav_settings">Settings</string>
+    <string name="nav_help">Help</string>
+    <string name="nav_activity">Activity</string>
+
+    <!-- Home Screen -->
+    <string name="home_title">SitBreak</string>
+    <string name="home_pause">Pause</string>
+    <string name="home_stop">Stop</string>
+    <string name="home_resume">Resume</string>
+    <string name="home_stand_up">I stood up</string>
+    <string name="home_snooze">Snooze 5 min</string>
+    <string name="home_complete_continue">Done! Keep going</string>
+    <string name="home_start_timer">Start timer</string>
+    <string name="home_ready">Ready to go?</string>
+    <string name="home_subtitle">Tap start to track your sitting time</string>
+    <string name="home_today_goal">Today\'s goal</string>
+    <string name="home_today_stand">Stand-ups today</string>
+    <string name="home_stand_times">%d times</string>
+    <string name="home_stand_count">Stood up %d times</string>
+    <string name="home_interval_minutes">Every %d min</string>
+    <string name="home_completion_rate">Completion</string>
+    <string name="home_active_hours">Active time</string>
+    <string name="home_today_record">Today\'s log</string>
+    <string name="home_target_time">Target %1$02d:%2$02d</string>
+    <string name="home_elapsed_label">Sitting for</string>
+    <string name="home_record_stand_up">Stand reminder</string>
+    <string name="home_record_micro_break">Micro break</string>
+    <string name="home_record_snoozed">Snoozed</string>
+    <string name="home_notification_permission_banner">⚠ Enable notifications, otherwise stand reminders will not arrive  Tap to enable</string>
+    <string name="home_step_verify_banner">Enable Activity Recognition to auto-verify that you really stood up  Tap to enable</string>
+    <string name="home_step_verified">Movement detected ✓</string>
+
+    <!-- Stats Screen -->
+    <string name="stats_title">Health stats</string>
+    <string name="stats_weekly_avg">Weekly average</string>
+    <string name="stats_last_7_days">Last 7 days</string>
+    <string name="stats_total_stands">Total stand-ups</string>
+    <string name="stats_longest_streak">Longest streak</string>
+
+    <!-- Settings Screen -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_reminder">Reminders</string>
+    <string name="settings_sitting_interval">Sitting reminder interval</string>
+    <string name="settings_micro_break_interval">Micro break interval</string>
+    <string name="settings_micro_break_enabled">Enable micro breaks</string>
+    <string name="settings_notification_sound">Reminder sound</string>
+    <string name="settings_work_hours">Working hours</string>
+    <string name="settings_work_start">Start time</string>
+    <string name="settings_work_end">End time</string>
+    <string name="settings_reminder_date">Reminder days</string>
+    <string name="settings_weekend">Weekend reminders</string>
+    <string name="settings_notification">Notification style</string>
+    <string name="settings_vibration">Vibration</string>
+    <string name="settings_sound">Sound</string>
+    <string name="settings_water_reminder">Water reminder (every 90 min)</string>
+    <string name="settings_eye_reminder">Eye-rest reminder (every 20 min)</string>
+    <string name="settings_reminder_style">Reminder tone</string>
+    <string name="settings_style_health_care">Health care</string>
+    <string name="settings_enabled">On</string>
+    <string name="settings_disabled">Off</string>
+    <string name="settings_version">SitBreak v1.0.0</string>
+
+    <!-- Settings: Interval Picker -->
+    <string name="settings_custom_interval">Custom %d min</string>
+    <string name="settings_interval_minutes">%d min</string>
+    <string name="settings_select_interval">Select reminder interval</string>
+    <string name="settings_select_micro_break">Select micro break interval</string>
+    <string name="settings_custom">Custom</string>
+    <string name="settings_custom_minutes">Custom minutes</string>
+    <string name="settings_custom_range_hint">Enter a value between %1$d and %2$d minutes</string>
+
+    <!-- Settings: Common -->
+    <string name="settings_cancel">Cancel</string>
+    <string name="settings_confirm">Confirm</string>
+    <string name="settings_ok">OK</string>
+
+    <!-- Settings: Day Picker -->
+    <string name="settings_select_days">Select reminder days</string>
+    <string name="settings_workdays">Weekdays</string>
+    <string name="settings_clear">Clear</string>
+    <string name="settings_weekdays_range">Mon – Fri</string>
+    <string name="settings_every_day">Every day</string>
+    <string name="settings_none">None</string>
+    <string name="settings_day_monday">Mon</string>
+    <string name="settings_day_tuesday">Tue</string>
+    <string name="settings_day_wednesday">Wed</string>
+    <string name="settings_day_thursday">Thu</string>
+    <string name="settings_day_friday">Fri</string>
+    <string name="settings_day_saturday">Sat</string>
+    <string name="settings_day_sunday">Sun</string>
+
+    <!-- Settings: Sound Picker -->
+    <string name="settings_select_sound">Select reminder sound</string>
+    <string name="settings_stop">Stop</string>
+    <string name="settings_preview">Preview</string>
+    <string name="settings_selected_prefix">Selected: </string>
+    <string name="settings_click_select_audio">Tap ▶ to choose an audio file</string>
+    <string name="settings_sound_crisp">Crisp chime</string>
+    <string name="settings_sound_soft">Soft bell</string>
+    <string name="settings_sound_short">Short beep</string>
+    <string name="settings_sound_lively">Lively tone</string>
+    <string name="settings_sound_classic">Classic alert</string>
+    <string name="settings_sound_custom">Custom sound</string>
+
+    <!-- Settings: Style Picker -->
+    <string name="settings_select_style">Select reminder tone</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_skip">Skip</string>
+    <string name="onboarding_next">Next</string>
+    <string name="onboarding_start">Get started</string>
+    <string name="onboarding_p1_title">Sitting creeps up on you</string>
+    <string name="onboarding_p1_desc">SitBreak tracks how long you have been sitting and nudges you with a notification when it is time to move. Default interval is 45 minutes, fully adjustable.</string>
+    <string name="onboarding_p2_title">More than just a beep</string>
+    <string name="onboarding_p2_desc">Besides stand reminders there are micro breaks, water and eye-rest reminders. Full-screen alerts stay out of the way while you game or watch videos.</string>
+    <string name="onboarding_p3_title">Your data never leaves this phone</string>
+    <string name="onboarding_p3_desc">Check-ins are stored in a local database. No network, no upload, no account. Notification permission powers reminders, activity recognition verifies you actually stood up — both optional.</string>
+
+    <!-- Accessibility (TalkBack) -->
+    <string name="a11y_timer_progress">Sitting timer: %1$d min %2$d sec elapsed, target %3$d min, %4$d%% complete</string>
+    <string name="a11y_open_notification_settings">Enable notification permission</string>
+    <string name="a11y_open_activity_permission">Enable activity recognition permission</string>
+    <string name="a11y_stat_card">%1$s: %2$s</string>
+</resources>

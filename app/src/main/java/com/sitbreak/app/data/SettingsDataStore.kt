@@ -8,6 +8,7 @@ class SettingsDataStore(private val context: Context) {
     val timer = TimerSettingsDataStore(context)
     val notification = NotificationSettingsDataStore(context)
     val reminder = ReminderSettingsDataStore(context)
+    val appState = AppStateDataStore(context)
 
     val sittingIntervalMinutes: Flow<Int> get() = timer.sittingIntervalMinutes
     val microBreakIntervalMinutes: Flow<Int> get() = timer.microBreakIntervalMinutes
@@ -29,6 +30,8 @@ class SettingsDataStore(private val context: Context) {
     val isEyeReminderEnabled: Flow<Boolean> get() = reminder.isEyeReminderEnabled
     val fullscreenBlacklist: Flow<Set<String>> get() = reminder.fullscreenBlacklist
 
+    val onboardingCompleted: Flow<Boolean> get() = appState.onboardingCompleted
+
     suspend fun setSittingInterval(minutes: Int) = timer.setSittingInterval(minutes)
     suspend fun setMicroBreakInterval(minutes: Int) = timer.setMicroBreakInterval(minutes)
     suspend fun setWorkStartHour(hour: Int) = timer.setWorkStartHour(hour)
@@ -48,4 +51,6 @@ class SettingsDataStore(private val context: Context) {
     suspend fun setWaterReminderEnabled(enabled: Boolean) = reminder.setWaterReminderEnabled(enabled)
     suspend fun setEyeReminderEnabled(enabled: Boolean) = reminder.setEyeReminderEnabled(enabled)
     suspend fun setFullscreenBlacklist(packages: Set<String>) = reminder.setFullscreenBlacklist(packages)
+
+    suspend fun setOnboardingCompleted(completed: Boolean) = appState.setOnboardingCompleted(completed)
 }
