@@ -30,8 +30,6 @@ import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.sitbreak.app.navigation.MainNavHost
 import com.sitbreak.app.ui.theme.SitBreakTheme
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -48,13 +46,9 @@ class MainActivity : ComponentActivity() {
         }
         setContent {
             SitBreakTheme {
-                // 读取上次崩溃日志；若有过崩溃则在启动时弹出，方便用户一键复制反馈。
-                var crashText by remember { mutableStateOf<String?>(null) }
-                LaunchedEffect(Unit) {
-                    withContext(Dispatchers.IO) {
-                        crashText = CrashReporter.read(this@MainActivity)
-                    }
-                }
+                // 同步读取上次崩溃日志（文件很小，主线程读取无碍），确保对话框在第一帧就出现，
+                // 避免崩溃死循环时主界面先渲染又崩、用户永远看不到日志。
+                var crashText by remember { mutableStateOf(CrashReporter.read(this@MainActivity)) }
                 crashText?.let { text ->
                     CrashReportDialog(
                         text = text,
@@ -64,6 +58,10 @@ class MainActivity : ComponentActivity() {
                         },
                     )
                 }
+
+                // 若已有上次崩溃记录，先只弹对话框、暂不渲染主界面，避免「崩溃-重启-再崩溃」死循环
+                // 导致用户永远看不到崩溃日志。关闭对话框（crashText 置空）后才会渲染主界面。
+                if (crashText != null) return@SitBreakTheme
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     val permissionState = rememberPermissionState(
