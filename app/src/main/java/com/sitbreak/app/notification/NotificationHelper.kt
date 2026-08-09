@@ -52,6 +52,27 @@ class NotificationHelper @Inject constructor() {
     }
 
     /**
+     * 同步确保前台服务通知渠道已创建。
+     * 必须在 [Service.startForeground] 之前调用，避免 Android 12+ 因渠道不存在抛出
+     * `RemoteServiceException: Bad notification for startForeground`。
+     */
+    fun ensureServiceChannel(context: Context) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        if (manager.getNotificationChannel(CHANNEL_SERVICE) != null) return
+        manager.createNotificationChannel(
+            NotificationChannel(
+                CHANNEL_SERVICE,
+                "计时服务",
+                NotificationManager.IMPORTANCE_LOW,
+            ).apply {
+                description = "久坐计时器后台运行"
+                setShowBadge(false)
+            }
+        )
+    }
+
+    /**
      * 根据当前设置创建/更新通知渠道。
      * 提醒类渠道使用动态 ID（编码声音/震动/铃声索引），确保 Android O+ 上修改设置后能生效。
      */

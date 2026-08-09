@@ -79,6 +79,10 @@ class TimerService : Service() {
         super.onCreate()
         settingsDataStore = SettingsDataStore(this)
         repository = CheckInRepository(AppDatabase.getInstance(this).checkInDao())
+        // 同步创建前台服务渠道：startForeground 要求渠道必须已存在，否则 Android 12+
+        // 会直接抛 Bad notification for startForeground。createChannels 是挂起函数，
+        // 在协程里异步执行，可能在服务启动时尚未完成。
+        notificationHelper.ensureServiceChannel(this)
         scope.launch { notificationHelper.createChannels(this@TimerService) }
     }
 
