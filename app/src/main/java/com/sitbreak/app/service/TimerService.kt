@@ -5,6 +5,7 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.media.AudioAttributes
 import android.media.Ringtone
 import android.media.RingtoneManager
 import android.os.IBinder
@@ -259,6 +260,7 @@ class TimerService : Service() {
         if (sittingReminderSent && now - sittingReminderSentTime >= SITTING_REMINDER_REPEAT_MS) {
             sittingReminderSentTime = now
             notificationHelper.sendSittingReminder(this, sittingElapsed.toInt(), isVibrationEnabled)
+            startAlertSound()
         }
 
         if (isMicroBreakEnabled && !microBreakReminderSent && microBreakElapsed >= microBreakIntervalMinutes) {
@@ -380,8 +382,15 @@ class TimerService : Service() {
         if (alertRingtone?.isPlaying == true) return
         if (!isSoundEnabled) return
         val uri = notificationHelper.alertRingtoneUri(this)
-            ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+            ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
         alertRingtone = RingtoneManager.getRingtone(this, uri)?.apply {
+            // 用闹钟流（USAGE_ALARM）播放提醒铃声：独立于「通知音量」，且后台（前台服务）
+            // 场景不会被系统静音，确保「到点必响」。默认 Ringtone 走 STREAM_NOTIFICATION，
+            // 华为 / Android 12+ 下后台通知流播放常被静音，表现为「有弹窗、没声音」。
+            audioAttributes = AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_ALARM)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .build()
             isLooping = true
             play()
         }
