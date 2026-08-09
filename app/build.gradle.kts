@@ -12,7 +12,10 @@ android {
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.sitbreak.app"
+        // 注意：namespace 保持不变（源码/R/BuildConfig 仍用 com.sitbreak.app），
+        // 仅改 applicationId 以全新包名安装，绕开华为手机上残留的旧 com.sitbreak.app
+        // （普通卸载清不掉的应用分身/隐私空间/多用户副本），彻底消除「签名不一致」。
+        applicationId = "com.standbreak.app"
         minSdk = 26
         targetSdk = 34
         versionCode = 1
