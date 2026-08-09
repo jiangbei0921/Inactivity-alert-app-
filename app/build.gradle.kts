@@ -57,7 +57,7 @@ android {
         // 不需要科学上网），与下载页、二维码指向同一站点，发布时一起更新。
         // 可用环境变量覆盖，方便自建源或本地联调。
         val updateManifestUrl = System.getenv("UPDATE_MANIFEST_URL")
-            ?: "https://ff39a623aaed4aecbd47ab262b992462.bj9.agentos-app.net/update.json"
+            ?: "https://b757d9aac9dd4cf3a04ab31bf926c5bf.bj6.agentos-app.net/update.json"
         buildConfigField("String", "UPDATE_MANIFEST_URL", "\"$updateManifestUrl\"")
     }
 
