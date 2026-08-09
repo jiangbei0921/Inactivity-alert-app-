@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">SitBreak</string>
+    <string name="app_name">站一站</string>
 
     <!-- Bottom Navigation -->
     <string name="nav_home">Home</string>
@@ -10,7 +10,7 @@
     <string name="nav_activity">Activity</string>
 
     <!-- Home Screen -->
-    <string name="home_title">SitBreak</string>
+    <string name="home_title">站一站</string>
     <string name="home_pause">Pause</string>
     <string name="home_stop">Stop</string>
     <string name="home_resume">Resume</string>
@@ -65,7 +65,7 @@
     <string name="settings_style_health_care">Health care</string>
     <string name="settings_enabled">On</string>
     <string name="settings_disabled">Off</string>
-    <string name="settings_version">SitBreak v1.0.0</string>
+    <string name="settings_version">站一站 v1.0.0</string>
 
     <!-- Settings: Interval Picker -->
     <string name="settings_custom_interval">Custom %d min</string>

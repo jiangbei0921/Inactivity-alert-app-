@@ -11,17 +11,29 @@ import javax.inject.Inject
 
 class SmartDetector @Inject constructor() {
 
+    /**
+     * 判断本次提醒是否应被推迟（返回推迟分钟数，0 表示不推迟）。
+     *
+     * 设备适配：本方法在计时 tick 循环中被调用，部分国产 ROM（如某些 vivo/OPPO/华为）
+     * 对 [UsageStatsManager] 的查询可能抛出 SecurityException / RemoteException 等异常，
+     * 此处整体兜底——任何异常都视为「不抑制」，保证提醒照常触发，绝不因检测失败而崩溃。
+     */
     suspend fun checkShouldDelay(context: Context): Int {
-        if (isDoNotDisturbOn(context)) {
-            return 10
+        return try {
+            if (isDoNotDisturbOn(context)) {
+                return 10
+            }
+            if (isInCall(context)) {
+                return 10
+            }
+            if (isFullScreenApp(context)) {
+                return 5
+            }
+            0
+        } catch (e: Exception) {
+            // 检测失败不应影响正常提醒：安全降级为不抑制。
+            0
         }
-        if (isInCall(context)) {
-            return 10
-        }
-        if (isFullScreenApp(context)) {
-            return 5
-        }
-        return 0
     }
 
     private fun isDoNotDisturbOn(context: Context): Boolean {
@@ -56,13 +68,18 @@ class SmartDetector @Inject constructor() {
     private fun getForegroundPackageName(context: Context): String? {
         val usm = context.getSystemService(Context.USAGE_STATS_SERVICE) as? UsageStatsManager
             ?: return null
-        val now = System.currentTimeMillis()
-        val stats: List<UsageStats> = usm.queryUsageStats(
-            UsageStatsManager.INTERVAL_DAILY,
-            now - 10_000L,
-            now
-        )
-        if (stats.isEmpty()) return null
-        return stats.maxByOrNull { it.lastTimeUsed }?.packageName
+        return try {
+            val now = System.currentTimeMillis()
+            val stats: List<UsageStats> = usm.queryUsageStats(
+                UsageStatsManager.INTERVAL_DAILY,
+                now - 10_000L,
+                now
+            )
+            if (stats.isEmpty()) return null
+            stats.maxByOrNull { it.lastTimeUsed }?.packageName
+        } catch (e: Exception) {
+            // 部分 ROM 在未授权或受限时会抛异常，安全降级为无法判断前台应用。
+            null
+        }
     }
 }
