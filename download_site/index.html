@@ -211,6 +211,7 @@
     <div class="download">
       <h2 data-i18n="dl_h2">下载体验</h2>
       <p data-i18n="dl_p">国内网络可直接下载，无需科学上网。安装包托管于腾讯云，扫码即下。</p>
+      <div class="dl-fixed" data-i18n="dl_fixed">✅ <b>已修复：</b>此前「设定时间到了却不提醒、计时继续走」的问题已解决。现在到点必定弹出提醒（通知 + 震动/响铃 + 全屏弹窗）；智能免打扰仅在通话 / 勿扰 / 全屏视频时短暂延后，且最多延后约 40 分钟即强制提醒，不会再无限顺延。直接扫码 / 下载安装即可生效。</div>
       <div class="dl-grid">
         <div class="dl-card">
           <h4 data-i18n="dl_card1_h">① 点击链接下载</h4>
@@ -259,6 +260,7 @@
       dl_h2: "下载体验", dl_p: "两种方式，任选其一。安装包由 GitHub Actions 自动构建，长期稳定可用。",
       dl_danger: "<h4>🚨 华为/荣耀安装失败？原因：旧版签名不一致</h4><p>本包是 Debug 体验包，每次构建签名不同。只要手机里任何位置残留旧版「站一站」，就会提示「更新包与已安装应用的签名不一致」。<b>不是下载失败，也不是二维码过期。</b></p><ol><li><b>普通卸载：</b>设置 → 应用和服务 → 应用管理 → 搜索「站一站」→ 卸载。</li><li><b>关闭应用分身：</b>设置 → 应用和服务 → 应用分身 → 关闭「站一站」分身（如有）。</li><li><b>多用户/隐私空间：</b>设置 → 用户和账户 → 多用户 → 切换到每个用户/隐私空间 → 重复卸载。</li><li><b>为所有用户卸载（关键）：</b>设置 → 应用和服务 → 应用管理 → 搜索「站一站」→ 右上角 ⋮ → <b>为所有用户卸载</b>。</li><li>卸载完成后，<b>重启手机</b>，再扫码安装。</li></ol>",
       dl_card1_h: "① 点击链接下载", dl_card1_link: "⬇ 下载站一站", dl_card1_hint: "手机浏览器打开即可静默下载，约 18 MB。",
+      dl_fixed: "✅ <b>已修复：</b>此前「设定时间到了却不提醒、计时继续走」的问题已解决。现在到点必定弹出提醒（通知 + 震动/响铃 + 全屏弹窗）；智能免打扰仅在通话 / 勿扰 / 全屏视频时短暂延后，且最多延后约 40 分钟即强制提醒，不会再无限顺延。直接扫码 / 下载安装即可生效。",
       dl_card2_h: "② 扫码下载", dl_card2_hint: "用手机相机 / 微信扫一扫，直接下载安装。",
       dl_warning: "<b>⚠️ 安装前必读：</b>若你的手机已安装过旧版「站一站」，请先卸载旧版再安装本包，否则华为/安卓会提示「更新包与已安装应用的签名不一致」导致安装失败。<br>卸载路径：设置 → 应用和服务 → 应用管理 → 站一站 → 卸载。若开启多用户/隐私空间，请在主用户进入「应用管理 → 站一站 → ⋮ → 为所有用户卸载」。",
       dl_note: "⚠️ 安装前请先卸载旧版「站一站」。当前为 Debug 签名体验包，用于体验与测试；正式使用请确保使用自有签名密钥的 Release 构建。安装时若提示「未知来源」，按系统引导允许本次安装即可。",
@@ -287,6 +289,7 @@
       dl_h2: "Get the app", dl_p: "Two ways, pick either. The APK is auto-built by GitHub Actions — stable and always up to date.",
       dl_danger: "<h4>🚨 Huawei/Honor install failed? Reason: old version signature mismatch</h4><p>This is a Debug trial build; the signing key changes every build. Any leftover copy of 站一站 on your phone will trigger \"update package signatures do not match\". <b>It is not a download failure and the QR code is not expired.</b></p><ol><li><b>Normal uninstall:</b> Settings → Apps → search \"站一站\" → Uninstall.</li><li><b>Disable app twin:</b> Settings → Apps → App twin → turn off 站一站 twin if present.</li><li><b>Multi-user / private space:</b> Settings → Users & accounts → Multi-user → switch to every user/private space and uninstall.</li><li><b>Uninstall for all users (key):</b> Settings → Apps → search \"站一站\" → ⋮ → <b>Uninstall for all users</b>.</li><li>After uninstalling, <b>reboot</b>, then scan the QR code again.</li></ol>",
       dl_card1_h: "① Download via link", dl_card1_link: "⬇ Download 站一站", dl_card1_hint: "Open in your phone's browser to download silently (~18 MB).",
+      dl_fixed: "✅ <b>Fixed:</b> the previous issue where the reminder never fired at the set time (the timer just kept counting) is resolved. The reminder now always fires on time (notification + vibration/ringtone + full-screen popup). Smart Do-Not-Disturb only briefly delays during calls / DND / full-screen video, and forces the reminder after at most ~40 minutes — no more infinite snoozing. Just scan or download to install.",
       dl_card2_h: "② Scan to download", dl_card2_hint: "Use your camera or WeChat to scan and install directly.",
       dl_warning: "<b>⚠️ Before installing:</b> If an older version of 站一站 is already installed, uninstall it first. Otherwise Android will report \"update package signatures do not match the installed app\" and the install will fail.<br>Uninstall path: Settings → Apps → 站一站 → Uninstall. For multi-user / private space, switch to the owner profile and use \"Uninstall for all users\".",
       dl_note: "⚠️ Please uninstall the previous 站一站 app before installing. This is a Debug-signed trial build for testing. For daily use, install a Release build signed with your own key. If blocked by \"Unknown sources\", allow this install when prompted.",

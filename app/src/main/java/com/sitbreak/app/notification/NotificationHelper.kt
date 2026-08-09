@@ -73,6 +73,54 @@ class NotificationHelper @Inject constructor() {
     }
 
     /**
+     * 同步确保提醒类通知渠道（久坐/微休息）已存在。
+     * 计时服务在发提醒前调用本方法 await 完成，避免目标动态渠道尚未创建时通知被系统
+     * 静默丢弃（Android O+ 上向不存在的渠道发通知不会显示）。与 [createChannels] 共用同一
+     * 动态 ID 算法，因此二者不会互相覆盖或重复创建。
+     */
+    suspend fun ensureReminderChannels(context: Context) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+        val settings = SettingsDataStore(context)
+        val isSoundEnabled = settings.isSoundEnabled.first()
+        val isVibrationEnabled = settings.isVibrationEnabled.first()
+        val soundIndex = settings.notificationSoundIndex.first()
+
+        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        val sittingId = sittingChannelId(isSoundEnabled, isVibrationEnabled, soundIndex)
+        if (manager.getNotificationChannel(sittingId) == null) {
+            manager.createNotificationChannel(
+                buildReminderChannel(
+                    id = sittingId,
+                    name = "久坐提醒",
+                    description = "提醒您站起来活动一下",
+                    importance = NotificationManager.IMPORTANCE_HIGH,
+                    isSoundEnabled = isSoundEnabled,
+                    isVibrationEnabled = isVibrationEnabled,
+                    soundIndex = soundIndex,
+                    context = context,
+                )
+            )
+        }
+
+        val microId = microChannelId(isSoundEnabled, isVibrationEnabled, soundIndex)
+        if (manager.getNotificationChannel(microId) == null) {
+            manager.createNotificationChannel(
+                buildReminderChannel(
+                    id = microId,
+                    name = "微休息",
+                    description = "提醒您短暂休息片刻",
+                    importance = NotificationManager.IMPORTANCE_DEFAULT,
+                    isSoundEnabled = isSoundEnabled,
+                    isVibrationEnabled = isVibrationEnabled,
+                    soundIndex = soundIndex,
+                    context = context,
+                )
+            )
+        }
+    }
+
+    /**
      * 根据当前设置创建/更新通知渠道。
      * 提醒类渠道使用动态 ID（编码声音/震动/铃声索引），确保 Android O+ 上修改设置后能生效。
      */

@@ -67,6 +67,9 @@ class TimerService : Service() {
     private var pausedElapsedMinutes: Int = 0
     private var cachedStandCount: Int = 0
     private var tickCount: Int = 0
+    // 智能延迟（DND/通话/全屏）已顺延次数。达到上限后强制提醒，避免延迟条件
+    // 持续成立（如一直开着视频 app 或勿扰）时「永远不提醒、计时一路往下走」。
+    private var sittingDelayCount: Int = 0
 
     // 循环响铃：久坐提醒触发后由 Ringtone 持续播放，直到用户操作或到达上限/退出 app 才停止。
     private var alertRingtone: Ringtone? = null
@@ -174,6 +177,11 @@ class TimerService : Service() {
 
             sittingReminderSent = false
             microBreakReminderSent = false
+            sittingDelayCount = 0
+
+            // 计时开始前先确保提醒渠道已就绪（await 完成），避免首次提醒时
+            // 通知因目标渠道尚未创建而被系统静默丢弃。
+            notificationHelper.ensureReminderChannels(this)
 
             TimerStateHolder.setState(TimerState.Running)
             refreshStandCount()
@@ -243,17 +251,23 @@ class TimerService : Service() {
         updateServiceNotification(sittingElapsed.toInt())
 
         if (!sittingReminderSent && sittingElapsed >= sittingIntervalMinutes) {
-            val delayMinutes = smartDetector.checkShouldDelay(this)
-            if (delayMinutes > 0) {
-                sittingStartTime = sittingStartTime + delayMinutes * 60_000L
-                settingsDataStore.setSittingStartTime(sittingStartTime)
-            } else {
-                sittingReminderSent = true
-                sittingReminderSentTime = now
-                TimerStateHolder.setState(TimerState.Reminder)
-                notificationHelper.sendSittingReminder(this, sittingElapsed.toInt(), isVibrationEnabled)
-                startAlertSound()
+            // 智能延迟（DND/通话/全屏）只作为有限次短顺延：达到上限后本次必须提醒，
+            // 绝不无限顺延。否则在延迟条件持续成立（一直看视频/勿扰）时会「永不提醒」。
+            if (sittingDelayCount < MAX_DELAY_COUNT) {
+                val delayMinutes = smartDetector.checkShouldDelay(this)
+                if (delayMinutes > 0) {
+                    sittingStartTime = sittingStartTime + delayMinutes * 60_000L
+                    settingsDataStore.setSittingStartTime(sittingStartTime)
+                    sittingDelayCount++
+                    Log.d(TAG, "sitting reminder delayed $delayMinutes min (delay #$sittingDelayCount/$MAX_DELAY_COUNT)")
+                    return
+                }
             }
+            sittingReminderSent = true
+            sittingReminderSentTime = now
+            TimerStateHolder.setState(TimerState.Reminder)
+            notificationHelper.sendSittingReminder(this, sittingElapsed.toInt(), isVibrationEnabled)
+            startAlertSound()
         }
 
         // C9：周期提醒——若已发送久坐提醒但用户未处理，每 5 分钟重复提醒一次
@@ -430,6 +444,9 @@ class TimerService : Service() {
         private const val SNOOZE_DURATION_MS = 5 * 60 * 1000L
         private const val SITTING_REMINDER_REPEAT_MS = 5 * 60 * 1000L
         private const val ALERT_MAX_DURATION_MS = 30_000L
+        // 智能延迟（DND/通话/全屏）最多顺延次数；每次上限 10 分钟，即累计最多约 40 分钟，
+        // 之后到点必提醒，避免延迟条件持续成立时永不提醒。
+        private const val MAX_DELAY_COUNT = 4
 
         const val ACTION_START = "com.sitbreak.app.ACTION_START"
 
