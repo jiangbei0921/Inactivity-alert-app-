@@ -385,10 +385,9 @@ class TimerService : Service() {
         alertStartTime = System.currentTimeMillis()
     }
 
-    /** 停止并释放循环响铃。 */
+    /** 停止循环响铃。 */
     private fun stopAlertSound() {
         alertRingtone?.stop()
-        alertRingtone?.release()
         alertRingtone = null
     }
 
