@@ -21,6 +21,8 @@ build/
 local.properties
 *.jks
 *.keystore
+# 本地生成的签名密钥明文（含私钥 base64，绝不能提交）
+signing_secrets.txt
 
 # IDE / OS
 *.iml

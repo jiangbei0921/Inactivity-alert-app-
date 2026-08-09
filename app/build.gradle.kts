@@ -26,12 +26,10 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = true
-            isShrinkResources = true
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+            // 关闭混淆/压缩，确保 Release 包与 Debug 行为一致、稳定可运行
+            // （本项目曾因机型兼容问题，保守起见 Release 也关闭混淆）
+            isMinifyEnabled = false
+            isShrinkResources = false
             // 支持两种签名密钥注入方式：
             // 1) SIGNING_KEYSTORE：指向本地 keystore 文件路径（本地开发/某些 CI 场景）
             // 2) SIGNING_KEYSTORE_BASE64：将 keystore 文件 base64 编码后通过环境变量注入（GitHub Secrets 推荐）
@@ -63,6 +61,8 @@ android {
                     storePassword = storePasswordEnv
                     keyAlias = keyAliasEnv
                     keyPassword = keyPasswordEnv
+                    // 本仓库的签名密钥由 Python 生成，格式为 PKCS12
+                    storeType = "PKCS12"
                 }
             }
         }
