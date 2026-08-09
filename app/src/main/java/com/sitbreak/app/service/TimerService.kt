@@ -18,8 +18,8 @@ import com.sitbreak.app.data.CheckInRepository
 import com.sitbreak.app.data.SettingsDataStore
 import com.sitbreak.app.data.db.AppDatabase
 import com.sitbreak.app.data.db.CheckInRecord
-import com.sitbreak.app.detector.SmartDetector
 import com.sitbreak.app.health.StandingValidator
+import com.sitbreak.app.ui.reminder.ReminderActivity
 import com.sitbreak.app.notification.NotificationHelper
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -38,9 +38,6 @@ class TimerService : Service() {
 
     @Inject
     lateinit var notificationHelper: NotificationHelper
-
-    @Inject
-    lateinit var smartDetector: SmartDetector
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var tickJob: Job? = null
@@ -67,9 +64,6 @@ class TimerService : Service() {
     private var pausedElapsedMinutes: Int = 0
     private var cachedStandCount: Int = 0
     private var tickCount: Int = 0
-    // 智能延迟（DND/通话/全屏）累计顺延分钟数。达到 MAX_SMART_POSTPONE_MIN 后强制提醒，
-    // 避免延迟条件持续成立（如一直开着视频 app 或勿扰）时「永远不提醒、计时一路往下走」。
-    private var sittingDelayAccumMin: Int = 0
 
     // 循环响铃：久坐提醒触发后由 Ringtone 持续播放，直到用户操作或到达上限/退出 app 才停止。
     private var alertRingtone: Ringtone? = null
@@ -177,7 +171,6 @@ class TimerService : Service() {
 
             sittingReminderSent = false
             microBreakReminderSent = false
-            sittingDelayAccumMin = 0
 
             // 计时开始前先确保提醒渠道已就绪（await 完成），避免首次提醒时
             // 通知因目标渠道尚未创建而被系统静默丢弃。
@@ -250,24 +243,16 @@ class TimerService : Service() {
 
         updateServiceNotification(sittingElapsed.toInt())
 
-        // 智能延迟（DND/通话/全屏）只在「设定时间到达后」做有限时长顺延：累计顺延达到
-        // MAX_SMART_POSTPONE_MIN 后本次必须提醒，绝不无限顺延，也不会要求每次都重等整个
-        // 间隔。否则在延迟条件持续成立（一直看视频/勿扰）时会「到点不提醒、计时一路往下走」。
-        val delayThreshold = sittingIntervalMinutes + sittingDelayAccumMin
-        if (!sittingReminderSent && sittingElapsed >= delayThreshold) {
-            if (sittingDelayAccumMin < MAX_SMART_POSTPONE_MIN) {
-                val delayMinutes = smartDetector.checkShouldDelay(this)
-                if (delayMinutes > 0) {
-                    sittingDelayAccumMin += delayMinutes
-                    Log.d(TAG, "sitting reminder postponed $delayMinutes min (accum ${sittingDelayAccumMin}/$MAX_SMART_POSTPONE_MIN)")
-                    return
-                }
-            }
+        // 到点必提醒：久坐时长达到设定间隔且本次尚未提醒，立即触发弹窗 + 铃声，不再做任何
+        // 「智能延迟」。此前的智能延迟会在前台视频 / 勿扰时把提醒长时间顺延，表现为
+        // 「到点不提示、计时继续走」，与「到点必提醒」需求冲突，故移除。
+        if (!sittingReminderSent && sittingElapsed >= sittingIntervalMinutes) {
             sittingReminderSent = true
             sittingReminderSentTime = now
             TimerStateHolder.setState(TimerState.Reminder)
             notificationHelper.sendSittingReminder(this, sittingElapsed.toInt(), isVibrationEnabled)
             startAlertSound()
+            launchReminderActivity(sittingElapsed.toInt())
         }
 
         // C9：周期提醒——若已发送久坐提醒但用户未处理，每 5 分钟重复提醒一次
@@ -316,7 +301,6 @@ class TimerService : Service() {
         sittingReminderSent = false
         sittingReminderSentTime = 0L
         microBreakReminderSent = false
-        sittingDelayAccumMin = 0
         pauseStartTime = 0L
         settingsDataStore.setSittingStartTime(0L)
         settingsDataStore.setMicroBreakStartTime(0L)
@@ -333,7 +317,6 @@ class TimerService : Service() {
         sittingStartTime = sittingStartTime + SNOOZE_DURATION_MS
         sittingReminderSent = false
         sittingReminderSentTime = 0L
-        sittingDelayAccumMin = 0
         TimerStateHolder.setState(TimerState.Running)
         settingsDataStore.setSittingStartTime(sittingStartTime)
         cancelReminderNotifications()
@@ -411,6 +394,22 @@ class TimerService : Service() {
         alertRingtone = null
     }
 
+    /**
+     * 前台服务内直接拉起全屏提醒页，作为通知「全屏意图」的兜底，确保提示页面必定弹出
+     * （即便系统因后台限制拦截了通知的全屏意图）。前台服务允许在后台启动 Activity。
+     */
+    private fun launchReminderActivity(sittingMinutes: Int) {
+        val intent = Intent(this, ReminderActivity::class.java).apply {
+            putExtra(ReminderActivity.EXTRA_SITTING_MINUTES, sittingMinutes)
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        try {
+            startActivity(intent)
+        } catch (e: Exception) {
+            Log.w(TAG, "launchReminderActivity failed", e)
+        }
+    }
+
     private suspend fun updateServiceNotification(elapsedMinutes: Int) {
         val todayStandCount = cachedStandCount
         val nextReminder = if (sittingIntervalMinutes > elapsedMinutes) {
@@ -446,10 +445,6 @@ class TimerService : Service() {
         private const val SNOOZE_DURATION_MS = 5 * 60 * 1000L
         private const val SITTING_REMINDER_REPEAT_MS = 5 * 60 * 1000L
         private const val ALERT_MAX_DURATION_MS = 30_000L
-        // 智能延迟（DND/通话/全屏）累计最多顺延分钟数。达到上限后本次必提醒，
-        // 因此无论延迟条件是否持续成立，到点后最多 MAX_SMART_POSTPONE_MIN 分钟必定弹提醒，
-        // 彻底解决「到点不提醒、计时继续走」。
-        private const val MAX_SMART_POSTPONE_MIN = 10
 
         const val ACTION_START = "com.sitbreak.app.ACTION_START"
 
