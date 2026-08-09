@@ -181,7 +181,7 @@ class TimerService : Service() {
 
             // 计时开始前先确保提醒渠道已就绪（await 完成），避免首次提醒时
             // 通知因目标渠道尚未创建而被系统静默丢弃。
-            notificationHelper.ensureReminderChannels(this)
+            notificationHelper.ensureReminderChannels(this@TimerService)
 
             TimerStateHolder.setState(TimerState.Running)
             refreshStandCount()
