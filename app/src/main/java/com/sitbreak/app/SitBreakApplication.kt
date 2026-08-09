@@ -1,6 +1,7 @@
 package com.sitbreak.app
 
 import android.app.Application
+import android.util.Log
 import com.sitbreak.app.work.DailySummaryWorker
 import dagger.hilt.android.HiltAndroidApp
 
@@ -15,7 +16,14 @@ class SitBreakApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        // enqueueUniquePeriodicWork + KEEP 保证幂等，重复冷启动不会累积任务
-        DailySummaryWorker.schedule(this)
+        // 尽早安装全局崩溃捕获，确保能记录启动期（含 Application 之后）的未捕获异常。
+        CrashReporter.install(this)
+        // enqueueUniquePeriodicWork + KEEP 保证幂等，重复冷启动不会累积任务。
+        // 用 try-catch 包裹，避免 WorkManager 在极少数 ROM 上初始化异常导致整个应用启动即崩。
+        try {
+            DailySummaryWorker.schedule(this)
+        } catch (e: Exception) {
+            Log.e("SitBreakApplication", "schedule DailySummaryWorker failed", e)
+        }
     }
 }
