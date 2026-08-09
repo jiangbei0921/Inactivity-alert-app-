@@ -217,6 +217,8 @@ class NotificationHelper @Inject constructor() {
             .setGroup(GROUP_KEY_REMINDERS)
             .setVibrate(if (vibrationEnabled) longArrayOf(0, 300, 200, 300) else null)
             .setFullScreenIntent(fullScreenPendingIntent(context, sittingMinutes), true)
+            // 持续响铃由 TimerService 内的 Ringtone 循环提供，这里关闭渠道一次性 beep，避免双响。
+            .setSound(null)
             .addAction(0, "我站起来了", actionPendingIntent(context, ACTION_STAND_UP, 0))
             .addAction(0, "延迟5分钟", actionPendingIntent(context, ACTION_SNOOZE, 1))
             .setOngoing(true)
@@ -383,5 +385,15 @@ class NotificationHelper @Inject constructor() {
         }
 
         return RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+    }
+
+    /**
+     * 返回循环响铃应使用的声音 URI；若声音已关闭（isSoundEnabled=false）返回 null。
+     * 供 TimerService 用 Ringtone 持续播放，复用与通知渠道相同的音源解析逻辑。
+     */
+    suspend fun alertRingtoneUri(context: Context): Uri? {
+        val dataStore = NotificationSettingsDataStore(context)
+        if (!dataStore.isSoundEnabled.first()) return null
+        return resolveNotificationSoundUri(context, dataStore.notificationSoundIndex.first())
     }
 }

@@ -5,6 +5,8 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.media.Ringtone
+import android.media.RingtoneManager
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -49,6 +51,7 @@ class TimerService : Service() {
     private var microBreakIntervalMinutes: Int = 20
     private var isMicroBreakEnabled: Boolean = true
     private var isVibrationEnabled: Boolean = true
+    private var isSoundEnabled: Boolean = true
     private var workStartHour: Int = 9
     private var workEndHour: Int = 18
     private var isWeekendEnabled: Boolean = false
@@ -64,6 +67,10 @@ class TimerService : Service() {
     private var pausedElapsedMinutes: Int = 0
     private var cachedStandCount: Int = 0
     private var tickCount: Int = 0
+
+    // 循环响铃：久坐提醒触发后由 Ringtone 持续播放，直到用户操作或到达上限/退出 app 才停止。
+    private var alertRingtone: Ringtone? = null
+    private var alertStartTime: Long = 0L
 
     private lateinit var settingsDataStore: SettingsDataStore
     private lateinit var repository: CheckInRepository
@@ -92,7 +99,8 @@ class TimerService : Service() {
 
     override fun onTaskRemoved(rootIntent: Intent?) {
         // 前台计时服务：用户划掉任务卡片后应保持运行（START_REDELIVER_INTENT 会在被系统回收后自动重启），
-        // 因此这里不做任何停止处理，仅保留默认实现。
+        // 但循环响铃属于「需要用户介入才停」的强提醒，退出 app 时应立即停止响铃，避免后台持续吵闹。
+        stopAlertSound()
         super.onTaskRemoved(rootIntent)
     }
 
@@ -189,6 +197,7 @@ class TimerService : Service() {
         microBreakIntervalMinutes = settingsDataStore.microBreakIntervalMinutes.first()
         isMicroBreakEnabled = settingsDataStore.isMicroBreakEnabled.first()
         isVibrationEnabled = settingsDataStore.isVibrationEnabled.first()
+        isSoundEnabled = settingsDataStore.isSoundEnabled.first()
         workStartHour = settingsDataStore.workStartHour.first()
         workEndHour = settingsDataStore.workEndHour.first()
         isWeekendEnabled = settingsDataStore.isWeekendEnabled.first()
@@ -199,6 +208,12 @@ class TimerService : Service() {
 
     private suspend fun tick() {
         refreshSettings()
+        // 循环响铃上限/静音开关：达到 30s 上限或用户临时关闭声音时自动停铃（通知与计时保留）。
+        if (alertRingtone?.isPlaying == true &&
+            (!isSoundEnabled || System.currentTimeMillis() - alertStartTime >= ALERT_MAX_DURATION_MS)
+        ) {
+            stopAlertSound()
+        }
         // 每约 60 秒（4 个 15 秒 tick）刷新一次当日站立次数，避免通知里的「今日站立」长期失真。
         if (tickCount++ % 4 == 0) refreshStandCount()
 
@@ -233,6 +248,7 @@ class TimerService : Service() {
                 sittingReminderSentTime = now
                 TimerStateHolder.setState(TimerState.Reminder)
                 notificationHelper.sendSittingReminder(this, sittingElapsed.toInt(), isVibrationEnabled)
+                startAlertSound()
             }
         }
 
@@ -263,6 +279,7 @@ class TimerService : Service() {
     private suspend fun handleStandUp() {
         val now = System.currentTimeMillis()
 
+        stopAlertSound()
         val verified = StandingValidator.standingLikely()
         val record = CheckInRecord(
             timestamp = now,
@@ -293,6 +310,7 @@ class TimerService : Service() {
     }
 
     private suspend fun handleSnooze() {
+        stopAlertSound()
         sittingStartTime = sittingStartTime + SNOOZE_DURATION_MS
         sittingReminderSent = false
         sittingReminderSentTime = 0L
@@ -302,11 +320,13 @@ class TimerService : Service() {
     }
 
     private suspend fun handlePause() {
+        stopAlertSound()
         pauseTimer()
         cancelReminderNotifications()
     }
 
     private suspend fun handleStop() {
+        stopAlertSound()
         TimerStateHolder.setState(TimerState.Idle)
         tickJob?.cancel()
         sittingStartTime = 0L
@@ -349,6 +369,29 @@ class TimerService : Service() {
         manager.cancel(NotificationHelper.NOTIFICATION_ID_EYE)
     }
 
+    /**
+     * 启动循环响铃（久坐提醒用）。已在播放则直接返回，避免 5 分钟重复提醒时重复创建。
+     * 声音关闭（isSoundEnabled=false）时不响。声音 URI 复用通知设置里解析出的同一音源。
+     */
+    private suspend fun startAlertSound() {
+        if (alertRingtone?.isPlaying == true) return
+        if (!isSoundEnabled) return
+        val uri = notificationHelper.alertRingtoneUri(this)
+            ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+        alertRingtone = RingtoneManager.getRingtone(this, uri)?.apply {
+            isLooping = true
+            play()
+        }
+        alertStartTime = System.currentTimeMillis()
+    }
+
+    /** 停止并释放循环响铃。 */
+    private fun stopAlertSound() {
+        alertRingtone?.stop()
+        alertRingtone?.release()
+        alertRingtone = null
+    }
+
     private suspend fun updateServiceNotification(elapsedMinutes: Int) {
         val todayStandCount = cachedStandCount
         val nextReminder = if (sittingIntervalMinutes > elapsedMinutes) {
@@ -369,6 +412,7 @@ class TimerService : Service() {
     }
 
     override fun onDestroy() {
+        stopAlertSound()
         StandingValidator.stop()
         tickJob?.cancel()
         scope.cancel()
@@ -382,6 +426,7 @@ class TimerService : Service() {
         private const val EYE_REMINDER_INTERVAL_MIN = 20
         private const val SNOOZE_DURATION_MS = 5 * 60 * 1000L
         private const val SITTING_REMINDER_REPEAT_MS = 5 * 60 * 1000L
+        private const val ALERT_MAX_DURATION_MS = 30_000L
 
         const val ACTION_START = "com.sitbreak.app.ACTION_START"
 
