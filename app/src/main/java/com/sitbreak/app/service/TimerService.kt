@@ -62,7 +62,6 @@ class TimerService : Service() {
     private var isEyeReminderEnabled: Boolean = true
     private var pauseStartTime: Long = 0L
     private var pausedElapsedMinutes: Int = 0
-    private var autoPaused: Boolean = false
     private var cachedStandCount: Int = 0
     private var tickCount: Int = 0
 
@@ -84,7 +83,7 @@ class TimerService : Service() {
             NotificationHelper.ACTION_PAUSE_TIMER -> dispatch { handlePause() }
             NotificationHelper.ACTION_RESUME_TIMER -> dispatch { resumeTimer() }
             NotificationHelper.ACTION_STOP_TIMER -> dispatch { handleStop() }
-            else -> startTimer()
+            else -> { /* 未知或空 action 不应重置/重启计时器，避免误触发暂停或恢复 */ }
         }
         return START_REDELIVER_INTENT
     }
@@ -203,22 +202,19 @@ class TimerService : Service() {
         // 每约 60 秒（4 个 15 秒 tick）刷新一次当日站立次数，避免通知里的「今日站立」长期失真。
         if (tickCount++ % 4 == 0) refreshStandCount()
 
-        if (TimerStateHolder.state.value == TimerState.Paused) {
-            updateServiceNotification(pausedElapsedMinutes)
-            return
-        }
-
-        if (!TimeUtils.isInWorkingHours(workStartHour, workEndHour, enabledDays, isWeekendEnabled)) {
-            if (TimerStateHolder.state.value == TimerState.Running) {
-                autoPaused = true
-                pauseTimer()
+        // 计时器仅在「用户主动暂停」时停止计时；Running / Reminder 下持续按 sittingStartTime
+        // 累计久坐时长并触发提醒。不再因「非工作时间」强制暂停，也不在任意非运行态自动恢复，
+        // 以避免点击/状态切换引发的非预期暂停或恢复，使计时功能稳定持续运行。
+        when (val state = TimerStateHolder.state.value) {
+            TimerState.Paused -> {
+                updateServiceNotification(pausedElapsedMinutes)
+                return
             }
-            updateServiceNotification(pausedElapsedMinutes)
-            return
-        }
-
-        if (TimerStateHolder.state.value != TimerState.Running) {
-            resumeTimer()
+            TimerState.Idle, TimerState.Completed -> {
+                updateServiceNotification(0)
+                return
+            }
+            else -> { /* Running 或 Reminder：继续计时与提醒 */ }
         }
 
         val now = System.currentTimeMillis()
@@ -285,7 +281,6 @@ class TimerService : Service() {
         sittingReminderSent = false
         sittingReminderSentTime = 0L
         microBreakReminderSent = false
-        autoPaused = false
         pauseStartTime = 0L
         settingsDataStore.setSittingStartTime(0L)
         settingsDataStore.setMicroBreakStartTime(0L)
@@ -317,7 +312,6 @@ class TimerService : Service() {
         sittingStartTime = 0L
         microBreakStartTime = 0L
         pauseStartTime = 0L
-        autoPaused = false
         settingsDataStore.setSittingStartTime(0L)
         settingsDataStore.setMicroBreakStartTime(0L)
         cancelReminderNotifications()
@@ -333,12 +327,8 @@ class TimerService : Service() {
 
     private suspend fun resumeTimer() {
         val now = System.currentTimeMillis()
-        if (autoPaused) {
-            sittingStartTime = now
-            microBreakStartTime = now
-            waterReminderStartTime = now
-            eyeReminderStartTime = now
-        } else if (pauseStartTime > 0L) {
+        // 手动/通知「继续」：把暂停期间消耗的时长补偿回各计时起点，使久坐时长连续。
+        if (pauseStartTime > 0L) {
             val pausedDuration = now - pauseStartTime
             sittingStartTime += pausedDuration
             microBreakStartTime += pausedDuration
@@ -347,7 +337,6 @@ class TimerService : Service() {
         }
         settingsDataStore.setSittingStartTime(sittingStartTime)
         settingsDataStore.setMicroBreakStartTime(microBreakStartTime)
-        autoPaused = false
         pauseStartTime = 0L
         TimerStateHolder.setState(TimerState.Running)
     }
