@@ -3,6 +3,7 @@ package com.sitbreak.app
 import android.app.Application
 import android.util.Log
 import com.sitbreak.app.work.DailySummaryWorker
+import com.sitbreak.app.work.UpdateCheckWorker
 import dagger.hilt.android.HiltAndroidApp
 
 /**
@@ -24,6 +25,12 @@ class SitBreakApplication : Application() {
             DailySummaryWorker.schedule(this)
         } catch (e: Exception) {
             Log.e("SitBreakApplication", "schedule DailySummaryWorker failed", e)
+        }
+        // 更新检查同样是可延迟任务，单独 try-catch 保证它出问题不牵连小结任务
+        try {
+            UpdateCheckWorker.schedule(this)
+        } catch (e: Exception) {
+            Log.e("SitBreakApplication", "schedule UpdateCheckWorker failed", e)
         }
     }
 }

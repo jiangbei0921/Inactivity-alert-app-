@@ -85,6 +85,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.sitbreak.app.BuildConfig
 import com.sitbreak.app.R
 
 private val INTERVAL_OPTIONS = listOf(10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 75, 90)
@@ -218,10 +219,14 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
             )
         }
 
+        item { Spacer(modifier = Modifier.height(16.dp)) }
+        item { SectionHeader(title = stringResource(R.string.settings_update)) }
+        item { UpdateSettingsCard() }
+
         item {
             Spacer(modifier = Modifier.height(32.dp))
             Text(
-                text = stringResource(R.string.settings_version),
+                text = stringResource(R.string.settings_version, BuildConfig.VERSION_NAME),
                 fontSize = 12.sp,
                 color = TextSecondary,
                 modifier = Modifier.fillMaxWidth(),

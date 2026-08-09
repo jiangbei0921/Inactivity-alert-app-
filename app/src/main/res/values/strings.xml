@@ -65,7 +65,41 @@
     <string name="settings_style_health_care">健康关怀</string>
     <string name="settings_enabled">已开启</string>
     <string name="settings_disabled">已关闭</string>
-    <string name="settings_version">站一站 v1.0.0</string>
+    <string name="settings_version">站一站 v%1$s</string>
+
+    <!-- Settings: App Update -->
+    <string name="settings_update">应用更新</string>
+    <string name="update_current_version">当前版本</string>
+    <string name="update_check">检查更新</string>
+    <string name="update_never_checked">尚未检查过更新</string>
+    <string name="update_last_checked">上次检查：%1$s</string>
+    <string name="update_checking">正在检查更新…</string>
+    <string name="update_up_to_date">已是最新版本</string>
+    <string name="update_found">发现新版本 %1$s</string>
+    <string name="update_size_incremental">增量更新仅需 %1$s，比完整包省 %2$d%%</string>
+    <string name="update_size_full">完整安装包 %1$s</string>
+    <string name="update_now">立即更新</string>
+    <string name="update_ignore">忽略此版本</string>
+    <string name="update_downloading_incremental">正在下载增量补丁</string>
+    <string name="update_downloading_full">正在下载完整安装包</string>
+    <string name="update_progress_bytes">%1$s / %2$s（%3$d%%）</string>
+    <string name="update_patching">正在本地合成安装包</string>
+    <string name="update_patching_hint">已完成 %1$d%%，此过程不消耗流量</string>
+    <string name="update_verifying">正在校验安装包完整性…</string>
+    <string name="update_ready">%1$s 已准备就绪</string>
+    <string name="update_saved_summary">本次增量升级为你省下约 %1$d%% 流量</string>
+    <string name="update_install">立即安装</string>
+    <string name="update_later">稍后</string>
+    <string name="update_installing">已打开系统安装界面，请按提示完成安装</string>
+    <string name="update_cancel">取消更新</string>
+    <string name="update_retry">重试</string>
+    <string name="update_dismiss">知道了</string>
+    <string name="update_failed_prefix">更新未完成：%1$s</string>
+    <string name="update_rollback_hint">临时文件已清理，当前版本可正常使用</string>
+    <string name="update_auto_check">自动检查更新</string>
+    <string name="update_auto_check_hint">每天后台静默检查一次，发现新版才提示</string>
+    <string name="update_wifi_only">仅 Wi-Fi 自动下载</string>
+    <string name="update_wifi_only_hint">手动点「立即更新」时不受此限制</string>
 
     <!-- Settings: Interval Picker -->
     <string name="settings_custom_interval">自定义 %d 分钟</string>

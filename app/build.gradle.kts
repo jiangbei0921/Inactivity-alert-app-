@@ -1,5 +1,32 @@
 import java.util.Base64
 
+/**
+ * 版本号必须单调递增，否则增量更新无从判断新旧、系统也会拒绝降级安装。
+ *
+ * 取值优先级：
+ * 1. 环境变量 VERSION_CODE —— 应急覆盖（手工出包、补发某个版本）
+ * 2. git 提交数 —— main 线性历史下天然单调递增，且本地与 CI 结果一致
+ *    （CI 必须用 fetch-depth: 0，浅克隆只能数到 1）
+ * 3. 兜底 1 —— 没有 git 的纯源码包场景，至少保证能编译
+ */
+fun resolveVersionCode(): Int {
+    System.getenv("VERSION_CODE")?.trim()?.toIntOrNull()?.let { if (it > 0) return it }
+    return try {
+        val process = ProcessBuilder("git", "rev-list", "--count", "HEAD")
+            .directory(rootDir)
+            .redirectErrorStream(true)
+            .start()
+        val output = process.inputStream.bufferedReader().use { it.readText() }.trim()
+        process.waitFor()
+        output.toIntOrNull()?.takeIf { it > 0 } ?: 1
+    } catch (e: Exception) {
+        logger.warn("Cannot resolve versionCode from git (${e.message}), falling back to 1")
+        1
+    }
+}
+
+val appVersionCode = resolveVersionCode()
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -18,13 +45,20 @@ android {
         applicationId = "com.standbreak.app"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = appVersionCode
+        versionName = "1.1.$appVersionCode"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        // 增量更新的清单地址。托管在 CloudStudio 静态站（腾讯系，国内直连，
+        // 不需要科学上网），与下载页、二维码指向同一站点，发布时一起更新。
+        // 可用环境变量覆盖，方便自建源或本地联调。
+        val updateManifestUrl = System.getenv("UPDATE_MANIFEST_URL")
+            ?: "https://ff39a623aaed4aecbd47ab262b992462.bj9.agentos-app.net/update.json"
+        buildConfigField("String", "UPDATE_MANIFEST_URL", "\"$updateManifestUrl\"")
     }
 
     buildTypes {
@@ -82,6 +116,8 @@ android {
 
     buildFeatures {
         compose = true
+        // AGP 8 默认关闭 BuildConfig 生成；增量更新需要读取 UPDATE_MANIFEST_URL
+        buildConfig = true
     }
 
     composeOptions {

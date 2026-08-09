@@ -16,6 +16,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # versionCode 取自 git 提交数，浅克隆只能数到 1，会让所有构建同号、
+          # 增量更新无从判断新旧，必须拉全量历史。
+          fetch-depth: 0
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -72,6 +76,69 @@ jobs:
             echo "path=$(ls app/build/outputs/apk/debug/*.apk)" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Read version from APK
+        id: version
+        run: |
+          set -euo pipefail
+          AAPT2="$(ls "$ANDROID_HOME"/build-tools/*/aapt2 | tail -1)"
+          BADGING="$("$AAPT2" dump badging "${{ steps.apk.outputs.path }}")"
+          CODE="$(echo "$BADGING" | sed -n "s/.*versionCode='\([0-9]*\)'.*/\1/p" | head -1)"
+          NAME="$(echo "$BADGING" | sed -n "s/.*versionName='\([^']*\)'.*/\1/p" | head -1)"
+          # aapt2 万一换了输出格式，退回与 build.gradle.kts 相同的推导公式
+          if [ -z "$CODE" ]; then CODE="$(git rev-list --count HEAD)"; NAME="1.1.$CODE"; fi
+          echo "code=$CODE" >> "$GITHUB_OUTPUT"
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+          echo "Built versionCode=$CODE versionName=$NAME"
+
+      - name: Install bsdiff
+        if: github.ref == 'refs/heads/main'
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq bsdiff
+
+      - name: Download previous release assets
+        if: github.ref == 'refs/heads/main'
+        run: |
+          mkdir -p prev
+          # 必须赶在删除 latest release 之前取走旧包——它们是生成差分补丁的基线
+          gh release download latest --dir prev --clobber || echo "no previous release, first full publish"
+          ls -la prev || true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build incremental patches & manifest
+        if: github.ref == 'refs/heads/main'
+        run: |
+          set -euo pipefail
+          NOTES="$(git log -1 --pretty=%s)"
+          python3 tools/make_release.py \
+            --new "${{ steps.apk.outputs.path }}" \
+            --version-code "${{ steps.version.outputs.code }}" \
+            --version-name "${{ steps.version.outputs.name }}" \
+            --notes "$NOTES" \
+            --prev-dir prev \
+            --out-dir dist
+          echo "--- dist ---"
+          ls -la dist
+          cat dist/update.json
+
+      - name: Assemble static download site
+        if: github.ref == 'refs/heads/main'
+        run: |
+          set -euo pipefail
+          mkdir -p site
+          # 站点只需要客户端会请求的东西：清单、全量包、补丁；
+          # base-*.apk 仅供下一轮 CI 生成补丁，不对外暴露。
+          cp dist/update.json dist/app-debug.apk site/
+          cp dist/p-*.patch site/ 2>/dev/null || echo "no patches this round"
+          cp download_site/index.html download_site/qrcode.png site/
+          ls -la site
+
+      - name: Upload site artifact
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: download-site
+          path: site/
+          retention-days: 30
 
       - name: Delete previous latest release & tag (if any)
         if: github.ref == 'refs/heads/main'
@@ -98,13 +165,14 @@ jobs:
               console.log('Deleted existing tag', tag);
             } catch (e) { console.log('No tag to delete:', e.message); }
 
-      - name: Publish APK to latest release
+      - name: Publish APK, patches & manifest to latest release
         if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
-          name: Latest Debug APK
+          name: Latest APK (${{ steps.version.outputs.name }})
           prerelease: false
-          files: ${{ steps.apk.outputs.path }}
+          # base-*.apk 一并发布：下一轮 CI 靠它们生成「落后两三个版本也能用」的补丁
+          files: dist/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!--
+        只暴露 cache/update 这一个子目录，安装器拿到的 content:// 无法遍历到应用的其他私有数据。
+        合成后的 APK 就落在这里，安装完成后由 UpdateRepository 主动清理。
+    -->
+    <cache-path
+        name="app_update"
+        path="update/" />
+</paths>

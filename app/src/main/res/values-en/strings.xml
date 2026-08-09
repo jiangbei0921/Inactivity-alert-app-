@@ -65,7 +65,41 @@
     <string name="settings_style_health_care">Health care</string>
     <string name="settings_enabled">On</string>
     <string name="settings_disabled">Off</string>
-    <string name="settings_version">站一站 v1.0.0</string>
+    <string name="settings_version">Stand Up v%1$s</string>
+
+    <!-- Settings: App Update -->
+    <string name="settings_update">App update</string>
+    <string name="update_current_version">Current version</string>
+    <string name="update_check">Check</string>
+    <string name="update_never_checked">Never checked yet</string>
+    <string name="update_last_checked">Last checked: %1$s</string>
+    <string name="update_checking">Checking for updates…</string>
+    <string name="update_up_to_date">You are on the latest version</string>
+    <string name="update_found">New version %1$s available</string>
+    <string name="update_size_incremental">Patch is only %1$s — %2$d%% smaller than the full package</string>
+    <string name="update_size_full">Full package %1$s</string>
+    <string name="update_now">Update now</string>
+    <string name="update_ignore">Skip this version</string>
+    <string name="update_downloading_incremental">Downloading patch</string>
+    <string name="update_downloading_full">Downloading full package</string>
+    <string name="update_progress_bytes">%1$s / %2$s (%3$d%%)</string>
+    <string name="update_patching">Building the installer locally</string>
+    <string name="update_patching_hint">%1$d%% done — no data usage for this step</string>
+    <string name="update_verifying">Verifying package integrity…</string>
+    <string name="update_ready">%1$s is ready to install</string>
+    <string name="update_saved_summary">This incremental update saved about %1$d%% of data</string>
+    <string name="update_install">Install now</string>
+    <string name="update_later">Later</string>
+    <string name="update_installing">System installer opened — follow the prompts</string>
+    <string name="update_cancel">Cancel update</string>
+    <string name="update_retry">Retry</string>
+    <string name="update_dismiss">Got it</string>
+    <string name="update_failed_prefix">Update incomplete: %1$s</string>
+    <string name="update_rollback_hint">Temporary files cleaned up; your current version still works</string>
+    <string name="update_auto_check">Auto check for updates</string>
+    <string name="update_auto_check_hint">Silently checks once a day, notifies only when a new version exists</string>
+    <string name="update_wifi_only">Auto download on Wi-Fi only</string>
+    <string name="update_wifi_only_hint">Tapping "Update now" always bypasses this limit</string>
 
     <!-- Settings: Interval Picker -->
     <string name="settings_custom_interval">Custom %d min</string>
