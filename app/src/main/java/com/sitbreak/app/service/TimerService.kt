@@ -67,9 +67,9 @@ class TimerService : Service() {
     private var pausedElapsedMinutes: Int = 0
     private var cachedStandCount: Int = 0
     private var tickCount: Int = 0
-    // 智能延迟（DND/通话/全屏）已顺延次数。达到上限后强制提醒，避免延迟条件
-    // 持续成立（如一直开着视频 app 或勿扰）时「永远不提醒、计时一路往下走」。
-    private var sittingDelayCount: Int = 0
+    // 智能延迟（DND/通话/全屏）累计顺延分钟数。达到 MAX_SMART_POSTPONE_MIN 后强制提醒，
+    // 避免延迟条件持续成立（如一直开着视频 app 或勿扰）时「永远不提醒、计时一路往下走」。
+    private var sittingDelayAccumMin: Int = 0
 
     // 循环响铃：久坐提醒触发后由 Ringtone 持续播放，直到用户操作或到达上限/退出 app 才停止。
     private var alertRingtone: Ringtone? = null
@@ -164,7 +164,7 @@ class TimerService : Service() {
             isEyeReminderEnabled = settingsDataStore.isEyeReminderEnabled.first()
 
             val now = System.currentTimeMillis()
-            if (sittingStartTime <= 0L || !TimeUtils.isToday(sittingStartTime)) {
+            if (sittingStartTime <= 0L || sittingStartTime > now || !TimeUtils.isToday(sittingStartTime)) {
                 // 避免旧时间戳导致“天文数字”久坐分钟数，或跨天继续计时
                 sittingStartTime = now
                 microBreakStartTime = now
@@ -177,7 +177,7 @@ class TimerService : Service() {
 
             sittingReminderSent = false
             microBreakReminderSent = false
-            sittingDelayCount = 0
+            sittingDelayAccumMin = 0
 
             // 计时开始前先确保提醒渠道已就绪（await 完成），避免首次提醒时
             // 通知因目标渠道尚未创建而被系统静默丢弃。
@@ -250,16 +250,16 @@ class TimerService : Service() {
 
         updateServiceNotification(sittingElapsed.toInt())
 
-        if (!sittingReminderSent && sittingElapsed >= sittingIntervalMinutes) {
-            // 智能延迟（DND/通话/全屏）只作为有限次短顺延：达到上限后本次必须提醒，
-            // 绝不无限顺延。否则在延迟条件持续成立（一直看视频/勿扰）时会「永不提醒」。
-            if (sittingDelayCount < MAX_DELAY_COUNT) {
+        // 智能延迟（DND/通话/全屏）只在「设定时间到达后」做有限时长顺延：累计顺延达到
+        // MAX_SMART_POSTPONE_MIN 后本次必须提醒，绝不无限顺延，也不会要求每次都重等整个
+        // 间隔。否则在延迟条件持续成立（一直看视频/勿扰）时会「到点不提醒、计时一路往下走」。
+        val delayThreshold = sittingIntervalMinutes + sittingDelayAccumMin
+        if (!sittingReminderSent && sittingElapsed >= delayThreshold) {
+            if (sittingDelayAccumMin < MAX_SMART_POSTPONE_MIN) {
                 val delayMinutes = smartDetector.checkShouldDelay(this)
                 if (delayMinutes > 0) {
-                    sittingStartTime = sittingStartTime + delayMinutes * 60_000L
-                    settingsDataStore.setSittingStartTime(sittingStartTime)
-                    sittingDelayCount++
-                    Log.d(TAG, "sitting reminder delayed $delayMinutes min (delay #$sittingDelayCount/$MAX_DELAY_COUNT)")
+                    sittingDelayAccumMin += delayMinutes
+                    Log.d(TAG, "sitting reminder postponed $delayMinutes min (accum ${sittingDelayAccumMin}/$MAX_SMART_POSTPONE_MIN)")
                     return
                 }
             }
@@ -316,6 +316,7 @@ class TimerService : Service() {
         sittingReminderSent = false
         sittingReminderSentTime = 0L
         microBreakReminderSent = false
+        sittingDelayAccumMin = 0
         pauseStartTime = 0L
         settingsDataStore.setSittingStartTime(0L)
         settingsDataStore.setMicroBreakStartTime(0L)
@@ -332,6 +333,7 @@ class TimerService : Service() {
         sittingStartTime = sittingStartTime + SNOOZE_DURATION_MS
         sittingReminderSent = false
         sittingReminderSentTime = 0L
+        sittingDelayAccumMin = 0
         TimerStateHolder.setState(TimerState.Running)
         settingsDataStore.setSittingStartTime(sittingStartTime)
         cancelReminderNotifications()
@@ -444,9 +446,10 @@ class TimerService : Service() {
         private const val SNOOZE_DURATION_MS = 5 * 60 * 1000L
         private const val SITTING_REMINDER_REPEAT_MS = 5 * 60 * 1000L
         private const val ALERT_MAX_DURATION_MS = 30_000L
-        // 智能延迟（DND/通话/全屏）最多顺延次数；每次上限 10 分钟，即累计最多约 40 分钟，
-        // 之后到点必提醒，避免延迟条件持续成立时永不提醒。
-        private const val MAX_DELAY_COUNT = 4
+        // 智能延迟（DND/通话/全屏）累计最多顺延分钟数。达到上限后本次必提醒，
+        // 因此无论延迟条件是否持续成立，到点后最多 MAX_SMART_POSTPONE_MIN 分钟必定弹提醒，
+        // 彻底解决「到点不提醒、计时继续走」。
+        private const val MAX_SMART_POSTPONE_MIN = 10
 
         const val ACTION_START = "com.sitbreak.app.ACTION_START"
 
