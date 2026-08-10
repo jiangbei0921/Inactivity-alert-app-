@@ -5,7 +5,6 @@ import android.view.View
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
-import androidx.compose.material.ripple.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -30,7 +29,6 @@ fun Modifier.hapticClickable(
         .clickable(
             enabled = enabled,
             interactionSource = interactionSource,
-            indication = ripple(),
             onClick = {
                 view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                 onClick()
