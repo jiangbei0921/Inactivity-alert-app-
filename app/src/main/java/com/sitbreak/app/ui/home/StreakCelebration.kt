@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -144,7 +145,6 @@ private fun ConfettiCanvas(modifier: Modifier = Modifier, durationMs: Int = 2400
                 color = colors[i % colors.size],
                 size = 6f + (i % 4) * 3f,
                 drift = ((i * 53) % 100) / 100f * 0.12f - 0.06f,
-                spin = (i % 2 == 0),
             )
         }
     }
@@ -162,15 +162,7 @@ private fun ConfettiCanvas(modifier: Modifier = Modifier, durationMs: Int = 2400
             val x = (p.x0 + p.drift * local) * size.width
             val y = local * size.height * 0.9f
             val alpha = (1f - local).coerceIn(0.25f, 1f)
-            val radius = p.size
-            if (p.spin) {
-                drawContext.canvas.save()
-                drawContext.canvas.rotate(local * 360f, x, y)
-                drawCircle(color = p.color, radius = radius, center = Offset(x, y), alpha = alpha)
-                drawContext.canvas.restore()
-            } else {
-                drawCircle(color = p.color, radius = radius, center = Offset(x, y), alpha = alpha)
-            }
+            drawCircle(color = p.color, radius = p.size, center = Offset(x, y), alpha = alpha)
         }
     }
 }
@@ -181,5 +173,4 @@ private data class ConfettiParticle(
     val color: Color,
     val size: Float,
     val drift: Float,
-    val spin: Boolean,
 )

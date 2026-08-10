@@ -172,7 +172,7 @@ fun HomeScreen(
             item { Spacer(modifier = Modifier.height(20.dp)) }
 
             if (timerState == TimerState.Idle) {
-                item { WelcomeCard(onStart = { viewModel.startTimer() }, currentStreak = currentStreak, navController = navController, onShare = onShare) }
+                item { WelcomeCard(onStart = { viewModel.startTimer() }, currentStreak = currentStreak, navController = navController, onShare = { onShare() }) }
                 item { Spacer(modifier = Modifier.height(16.dp)) }
                 item {
                     TodayInfoCard(
