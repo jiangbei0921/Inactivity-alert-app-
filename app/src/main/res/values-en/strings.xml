@@ -41,6 +41,8 @@
     <string name="home_streak">%d day streak</string>
     <string name="home_quick_activity">Activities</string>
     <string name="home_quick_stats">Stats</string>
+    <string name="home_quick_achievements">Achievements</string>
+    <string name="home_share">Share today\'s progress</string>
     <string name="home_delete_record">Delete this record</string>
 
     <!-- Stats Screen -->
@@ -169,4 +171,12 @@
     <string name="a11y_open_activity_permission">Enable activity recognition permission</string>
     <string name="a11y_open_settings">Open settings</string>
     <string name="a11y_stat_card">%1$s: %2$s</string>
+
+    <!-- Achievements & Streak Celebration -->
+    <string name="share_title">Share my check-in</string>
+    <string name="streak_celebration_title">Streak unlocked!</string>
+    <string name="streak_days">%d days</string>
+    <string name="streak_continue">Keep going</string>
+    <string name="achievements_title">Achievements</string>
+    <string name="achievements_unlocked">Unlocked %1$d / %2$d</string>
 </resources>

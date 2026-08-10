@@ -41,6 +41,8 @@
     <string name="home_streak">连续 %d 天</string>
     <string name="home_quick_activity">活动</string>
     <string name="home_quick_stats">统计</string>
+    <string name="home_quick_achievements">成就</string>
+    <string name="home_share">分享今日战绩</string>
     <string name="home_delete_record">删除该记录</string>
 
     <!-- Stats Screen -->
@@ -169,4 +171,12 @@
     <string name="a11y_open_activity_permission">开启活动识别权限</string>
     <string name="a11y_open_settings">打开设置</string>
     <string name="a11y_stat_card">%1$s：%2$s</string>
+
+    <!-- Achievements & Streak Celebration -->
+    <string name="share_title">分享我的打卡</string>
+    <string name="streak_celebration_title">连续打卡达成！</string>
+    <string name="streak_days">%d 天</string>
+    <string name="streak_continue">继续</string>
+    <string name="achievements_title">成就</string>
+    <string name="achievements_unlocked">已解锁 %1$d / %2$d</string>
 </resources>

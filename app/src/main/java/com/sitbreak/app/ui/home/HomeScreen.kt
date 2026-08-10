@@ -34,6 +34,8 @@ import androidx.compose.material.icons.outlined.FitnessCenter
 import androidx.compose.material.icons.outlined.LocalFireDepartment
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.EmojiEvents
+import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import com.sitbreak.app.TimerState
@@ -50,7 +52,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -85,6 +91,8 @@ import com.sitbreak.app.ui.components.SectionHeader
 import com.sitbreak.app.ui.components.StatCard
 import com.sitbreak.app.ui.components.hapticClickable
 import com.sitbreak.app.ui.components.rememberHapticClick
+import com.sitbreak.app.share.ShareCardData
+import com.sitbreak.app.share.ShareCardGenerator
 import com.sitbreak.app.ui.theme.AccentRed
 import com.sitbreak.app.ui.theme.AccentOrange
 import com.sitbreak.app.ui.theme.BlueLight
@@ -122,6 +130,27 @@ fun HomeScreen(
     val todayRecords by viewModel.todayRecords.collectAsState()
     val lastStandVerified by viewModel.lastStandVerified.collectAsState()
     val currentStreak by viewModel.currentStreak.collectAsState()
+    val celebrationStreak by viewModel.celebrationStreak.collectAsState()
+
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    fun onShare() {
+        scope.launch {
+            val uri = withContext(Dispatchers.IO) {
+                ShareCardGenerator.generate(
+                    context,
+                    ShareCardData(
+                        streak = currentStreak,
+                        todayCount = todayStandCount,
+                        completionRate = todayCompletionRate,
+                        activeHours = todayActiveHours,
+                        dateText = SimpleDateFormat("yyyy年M月d日", Locale.getDefault()).format(Date()),
+                    ),
+                )
+            }
+            uri?.let { ShareCardGenerator.share(context, it) }
+        }
+    }
 
     val progress = if (targetSeconds > 0) {
         (elapsedSeconds.toFloat() / targetSeconds).coerceIn(0f, 1f)
@@ -129,28 +158,29 @@ fun HomeScreen(
 
     var isRecordExpanded by remember { mutableStateOf(todayStandCount <= 1) }
 
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(PageBackground)
-            .padding(horizontal = 16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        item { NotificationPermissionBanner() }
-        item { StepVerificationBanner() }
-        item { TopBar(navController) }
-        item { Spacer(modifier = Modifier.height(20.dp)) }
+    Box(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(PageBackground)
+                .padding(horizontal = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            item { NotificationPermissionBanner() }
+            item { StepVerificationBanner() }
+            item { TopBar(navController) }
+            item { Spacer(modifier = Modifier.height(20.dp)) }
 
-        if (timerState == TimerState.Idle) {
-            item { WelcomeCard(onStart = { viewModel.startTimer() }, currentStreak = currentStreak, navController = navController) }
-            item { Spacer(modifier = Modifier.height(16.dp)) }
-            item {
-                TodayInfoCard(
-                    intervalMinutes = sittingInterval,
-                    todayStandCount = todayStandCount,
-                )
-            }
-        } else {
+            if (timerState == TimerState.Idle) {
+                item { WelcomeCard(onStart = { viewModel.startTimer() }, currentStreak = currentStreak, navController = navController, onShare = onShare) }
+                item { Spacer(modifier = Modifier.height(16.dp)) }
+                item {
+                    TodayInfoCard(
+                        intervalMinutes = sittingInterval,
+                        todayStandCount = todayStandCount,
+                    )
+                }
+            } else {
             item {
                 CircularTimer(
                     progress = progress,
@@ -355,6 +385,13 @@ fun HomeScreen(
         }
 
         item { Spacer(modifier = Modifier.height(16.dp)) }
+        }
+        if (celebrationStreak > 0) {
+            StreakCelebrationOverlay(
+                milestone = celebrationStreak,
+                onDismiss = { viewModel.dismissCelebration() },
+            )
+        }
     }
 }
 
@@ -426,6 +463,7 @@ private fun WelcomeCard(
     onStart: () -> Unit,
     currentStreak: Int,
     navController: NavHostController,
+    onShare: () -> Unit,
 ) {
     AppCard(
         modifier = Modifier.fillMaxWidth(),
@@ -493,7 +531,7 @@ private fun WelcomeCard(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // 快捷入口：一键直达活动与统计，强化首屏价值
+            // 快捷入口：一键直达活动、成就与统计，强化首屏价值
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -506,9 +544,41 @@ private fun WelcomeCard(
                 )
                 QuickEntryChip(
                     modifier = Modifier.weight(1f),
+                    icon = Icons.Outlined.EmojiEvents,
+                    label = stringResource(R.string.home_quick_achievements),
+                    onClick = { navController.navigate(Routes.ACHIEVEMENTS) },
+                )
+                QuickEntryChip(
+                    modifier = Modifier.weight(1f),
                     icon = Icons.Outlined.LocalFireDepartment,
                     label = stringResource(R.string.home_quick_stats),
                     onClick = { navController.navigate(Routes.STATS) },
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // 本地生成打卡分享图（离线），一键分享今日战绩
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .hapticClickable { onShare() }
+                    .padding(vertical = 4.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Share,
+                    contentDescription = null,
+                    tint = BluePrimary,
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = stringResource(R.string.home_share),
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.W500,
+                    color = BluePrimary,
                 )
             }
 

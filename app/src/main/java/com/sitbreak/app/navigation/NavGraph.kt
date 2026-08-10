@@ -36,6 +36,7 @@ import androidx.navigation.compose.rememberNavController
 import com.sitbreak.app.R
 import com.sitbreak.app.ui.help.HelpScreen
 import com.sitbreak.app.ui.help.HelpDetailScreen
+import com.sitbreak.app.ui.achievements.AchievementsScreen
 import com.sitbreak.app.ui.activity.HealthCenterScreen
 import com.sitbreak.app.ui.activity.ActivityDetailScreen
 import com.sitbreak.app.ui.home.HomeScreen
@@ -55,6 +56,7 @@ object Routes {
     const val STATS = "stats"
     const val SETTINGS = "settings"
     const val HELP = "help"
+    const val ACHIEVEMENTS = "achievements"
     const val HELP_DETAIL = "help_detail/{helpId}"
     fun helpDetail(id: String) = "help_detail/$id"
     const val ACTIVITY = "activity"
@@ -231,6 +233,9 @@ fun MainNavHost() {
                         navController.navigate(Routes.helpDetail(helpId))
                     }
                 )
+            }
+            composable(Routes.ACHIEVEMENTS) {
+                AchievementsScreen(onBack = { navController.popBackStack() })
             }
             composable(Routes.HELP_DETAIL) { backStackEntry ->
                 val helpId = backStackEntry.arguments?.getString("helpId") ?: "usage"

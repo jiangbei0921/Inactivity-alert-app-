@@ -9,6 +9,7 @@ class SettingsDataStore(private val context: Context) {
     val notification = NotificationSettingsDataStore(context)
     val reminder = ReminderSettingsDataStore(context)
     val appState = AppStateDataStore(context)
+    val achievements = AchievementDataStore(context)
 
     val sittingIntervalMinutes: Flow<Int> get() = timer.sittingIntervalMinutes
     val microBreakIntervalMinutes: Flow<Int> get() = timer.microBreakIntervalMinutes
@@ -32,6 +33,8 @@ class SettingsDataStore(private val context: Context) {
 
     val onboardingCompleted: Flow<Boolean> get() = appState.onboardingCompleted
 
+    val lastCelebratedStreak: Flow<Int> get() = achievements.lastCelebratedStreak
+
     suspend fun setSittingInterval(minutes: Int) = timer.setSittingInterval(minutes)
     suspend fun setMicroBreakInterval(minutes: Int) = timer.setMicroBreakInterval(minutes)
     suspend fun setWorkStartHour(hour: Int) = timer.setWorkStartHour(hour)
@@ -53,4 +56,5 @@ class SettingsDataStore(private val context: Context) {
     suspend fun setFullscreenBlacklist(packages: Set<String>) = reminder.setFullscreenBlacklist(packages)
 
     suspend fun setOnboardingCompleted(completed: Boolean) = appState.setOnboardingCompleted(completed)
+    suspend fun setLastCelebratedStreak(value: Int) = achievements.setLastCelebratedStreak(value)
 }

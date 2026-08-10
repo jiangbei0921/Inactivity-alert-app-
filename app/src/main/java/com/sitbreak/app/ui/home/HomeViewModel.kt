@@ -12,6 +12,7 @@ import com.sitbreak.app.data.CheckInRepository
 import com.sitbreak.app.data.SettingsDataStore
 import com.sitbreak.app.data.db.CheckInRecord
 import com.sitbreak.app.service.TimerService
+import com.sitbreak.app.ui.achievements.STREAK_MILESTONES
 import com.sitbreak.app.health.StandingValidator
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -55,6 +56,10 @@ class HomeViewModel @Inject constructor(
 
     private val _currentStreak = MutableStateFlow(0)
     val currentStreak: StateFlow<Int> = _currentStreak.asStateFlow()
+
+    /** 当前需要弹出的「连续天数庆祝」里程碑值；0 表示无需庆祝。 */
+    private val _celebrationStreak = MutableStateFlow(0)
+    val celebrationStreak: StateFlow<Int> = _celebrationStreak.asStateFlow()
 
     private val _lastStandVerified = MutableStateFlow<Boolean?>(null)
     val lastStandVerified: StateFlow<Boolean?> = _lastStandVerified.asStateFlow()
@@ -210,6 +215,25 @@ class HomeViewModel @Inject constructor(
         val records = repository.getTodayRecords(startOfDay, endOfDay)
         _todayRecords.value = records
         _currentStreak.value = computeCurrentStreak()
+        checkStreakCelebration(_currentStreak.value)
+    }
+
+    /**
+     * 当连续天数达到里程碑且高于上次已庆祝的里程碑时，触发庆祝浮层并记录该里程碑，
+     * 避免重复弹窗。数据全部来自本地，不依赖网络。
+     */
+    private suspend fun checkStreakCelebration(streak: Int) {
+        if (streak <= 0 || !STREAK_MILESTONES.contains(streak)) return
+        val last = settingsDataStore.lastCelebratedStreak.first()
+        if (streak > last) {
+            settingsDataStore.setLastCelebratedStreak(streak)
+            _celebrationStreak.value = streak
+        }
+    }
+
+    /** 用户关闭庆祝浮层后复位，避免重复展示。 */
+    fun dismissCelebration() {
+        _celebrationStreak.value = 0
     }
 
     /** 连续打卡天数：以今天（若无记录则昨天）为终点向前数连续有记录的日数。 */

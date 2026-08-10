@@ -7,4 +7,8 @@
     <cache-path
         name="app_update"
         path="update/" />
+    <!-- 本地生成的打卡分享图，仅应用私有 files/share 目录可见，分享时由 FileProvider 授予一次性读权限 -->
+    <files-path
+        name="share"
+        path="share/" />
 </paths>
