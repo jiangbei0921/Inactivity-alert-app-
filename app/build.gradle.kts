@@ -146,6 +146,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+    implementation("androidx.compose.material:material-ripple") // 提供 ripple() 触感涟漪（material3 仅传递依赖，需显式声明才能 import）
     implementation(libs.androidx.compose.material.icons.extended)
 
     implementation(libs.androidx.activity.compose)
