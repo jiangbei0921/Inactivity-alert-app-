@@ -15,6 +15,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import com.sitbreak.app.ui.components.AppCard
+import com.sitbreak.app.ui.components.EmptyState
+import com.sitbreak.app.ui.components.SkeletonScreen
+import com.sitbreak.app.ui.components.hapticClickable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -27,6 +30,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -52,6 +56,12 @@ fun StatsScreen(viewModel: StatsViewModel = hiltViewModel()) {
     val yearlyCompletionRate by viewModel.yearlyCompletionRate.collectAsState()
     val monthlyStandCounts by viewModel.monthlyStandCounts.collectAsState()
     val bestMonth by viewModel.bestMonth.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+
+    if (isLoading) {
+        SkeletonScreen()
+        return
+    }
 
     Column(
         modifier = Modifier
@@ -117,7 +127,7 @@ private fun SegmentedControl(
                                 spotColor = Color.Black.copy(alpha = 0.08f),
                             ) else Modifier
                         )
-                        .clickable { onSelectionChange(index) }
+                        .hapticClickable { onSelectionChange(index) }
                         .padding(vertical = 10.dp),
                     contentAlignment = Alignment.Center,
                 ) {
@@ -326,21 +336,24 @@ private fun BarChart(
     data: List<StatsViewModel.DailyBarData>,
     modifier: Modifier = Modifier,
 ) {
-    if (data.isEmpty()) return
+    if (data.isEmpty()) {
+        EmptyState(title = "暂无数据", subtitle = "今天还没有站立记录，先从一次起身开始吧")
+        return
+    }
 
     val maxY = data.maxOf { it.target.coerceAtLeast(1) }
 
     val density = LocalDensity.current
     val countPaint = remember(density) {
         android.graphics.Paint().apply {
-            color = android.graphics.Color.parseColor("#2563EB")
+            color = BluePrimary.toArgb()
             textSize = with(density) { 10.sp.toPx() }
             textAlign = android.graphics.Paint.Align.CENTER
         }
     }
     val dayLabelPaint = remember(density) {
         android.graphics.Paint().apply {
-            color = android.graphics.Color.parseColor("#6B7280")
+            color = TextSecondary.toArgb()
             textSize = with(density) { 11.sp.toPx() }
             textAlign = android.graphics.Paint.Align.CENTER
         }
@@ -396,14 +409,17 @@ private fun MonthlyBarChart(
     data: List<StatsViewModel.MonthlyBarData>,
     modifier: Modifier = Modifier,
 ) {
-    if (data.isEmpty()) return
+    if (data.isEmpty()) {
+        EmptyState(title = "暂无数据", subtitle = "本月还没有站立记录")
+        return
+    }
 
     val maxY = data.maxOf { it.count.coerceAtLeast(1) }
 
     val density = LocalDensity.current
     val monthLabelPaint = remember(density) {
         android.graphics.Paint().apply {
-            color = android.graphics.Color.parseColor("#6B7280")
+            color = TextSecondary.toArgb()
             textSize = with(density) { 10.sp.toPx() }
             textAlign = android.graphics.Paint.Align.CENTER
         }

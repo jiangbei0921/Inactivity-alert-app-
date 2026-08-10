@@ -47,6 +47,7 @@ import com.sitbreak.app.ui.theme.BorderGray
 import com.sitbreak.app.ui.theme.PageBackground
 import com.sitbreak.app.ui.theme.TextPrimary
 import com.sitbreak.app.ui.theme.TextSecondary
+import com.sitbreak.app.ui.components.rememberHapticClick
 
 private data class OnboardingPage(
     val icon: ImageVector,
@@ -184,7 +185,7 @@ private fun OnboardingContent(onFinish: () -> Unit) {
         Spacer(modifier = Modifier.height(24.dp))
 
         Button(
-            onClick = {
+            onClick = rememberHapticClick {
                 if (isLast) onFinish() else pageIndex += 1
             },
             modifier = Modifier

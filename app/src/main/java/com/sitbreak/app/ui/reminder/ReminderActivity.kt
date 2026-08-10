@@ -50,6 +50,7 @@ import com.sitbreak.app.ui.theme.BluePrimary
 import com.sitbreak.app.ui.theme.CardBackground
 import com.sitbreak.app.ui.theme.TextPrimary
 import com.sitbreak.app.ui.theme.TextSecondary
+import com.sitbreak.app.ui.theme.BlueLight
 
 class ReminderActivity : ComponentActivity() {
 
@@ -132,7 +133,7 @@ private fun ReminderScreen(
                     modifier = Modifier
                         .size(56.dp)
                         .clip(CircleShape)
-                        .background(Color(0xFFDBEAFE)),
+                        .background(BlueLight),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(

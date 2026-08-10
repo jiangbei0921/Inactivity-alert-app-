@@ -81,6 +81,7 @@ import com.sitbreak.app.ui.theme.PageBackground
 import com.sitbreak.app.ui.theme.TextPrimary
 import com.sitbreak.app.ui.theme.TextSecondary
 import com.sitbreak.app.ui.theme.TextTertiary
+import com.sitbreak.app.ui.theme.AccentRed
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -605,7 +606,7 @@ private fun IntervalPickerSheet(
                         Text(
                             text = stringResource(R.string.settings_custom_range_hint, customMin, customMax),
                             fontSize = 12.sp,
-                            color = if (customError && customInput.isNotEmpty()) Color(0xFFDC2626) else TextTertiary,
+                            color = if (customError && customInput.isNotEmpty()) AccentRed else TextTertiary,
                         )
                     },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),

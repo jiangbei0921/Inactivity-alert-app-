@@ -36,6 +36,12 @@
     <string name="home_notification_permission_banner">⚠ 请开启通知权限，否则无法收到站立提醒  点击开启</string>
     <string name="home_step_verify_banner">开启「活动识别」可自动验证你是否真的站起来，让打卡更可信  点击开启</string>
     <string name="home_step_verified">已检测到你起身活动 ✓</string>
+    <string name="home_no_record_title">今天还没有记录</string>
+    <string name="home_no_record_subtitle">完成一次起身打卡，这里就会留下足迹</string>
+    <string name="home_streak">连续 %d 天</string>
+    <string name="home_quick_activity">活动</string>
+    <string name="home_quick_stats">统计</string>
+    <string name="home_delete_record">删除该记录</string>
 
     <!-- Stats Screen -->
     <string name="stats_title">健康统计</string>

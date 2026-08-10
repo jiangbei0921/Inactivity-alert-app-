@@ -10,6 +10,9 @@ interface CheckInDao {
     @Insert
     suspend fun insert(record: CheckInRecord)
 
+    @androidx.room.Delete
+    suspend fun delete(record: CheckInRecord)
+
     @Query("SELECT * FROM check_in_records WHERE timestamp >= :startOfDay AND timestamp < :endOfDay ORDER BY timestamp DESC")
     suspend fun getTodayRecords(startOfDay: Long, endOfDay: Long): List<CheckInRecord>
 

@@ -34,6 +34,13 @@ import androidx.compose.ui.unit.sp
 import com.sitbreak.app.ui.theme.PageBackground
 import com.sitbreak.app.ui.theme.TextPrimary
 import com.sitbreak.app.ui.theme.TextSecondary
+import com.sitbreak.app.ui.theme.Slate
+import com.sitbreak.app.ui.theme.TintGreen
+import com.sitbreak.app.ui.theme.TintOrange
+import com.sitbreak.app.ui.theme.TintPurple
+import com.sitbreak.app.ui.theme.TintRed
+import com.sitbreak.app.ui.theme.TintTeal
+import com.sitbreak.app.ui.theme.TintBlue
 
 data class ActivityItem(
     val id: String,
@@ -48,7 +55,7 @@ val activities = listOf(
         id = "neck",
         name = "颈椎拉伸",
         duration = "30秒",
-        bgColor = Color(0xFFDBEAFE),
+        bgColor = TintBlue,
         steps = listOf(
             "🔄 头部缓慢向左转，保持5秒",
             "🔄 头部缓慢向右转，保持5秒",
@@ -61,7 +68,7 @@ val activities = listOf(
         id = "shoulder",
         name = "肩颈放松",
         duration = "45秒",
-        bgColor = Color(0xFFD1FAE5),
+        bgColor = TintGreen,
         steps = listOf(
             "⬆️ 双肩同时向上耸起，保持3秒后放松",
             "🔄 双肩向前画圈5次",
@@ -74,7 +81,7 @@ val activities = listOf(
         id = "back",
         name = "腰背舒展",
         duration = "60秒",
-        bgColor = Color(0xFFFED7AA),
+        bgColor = TintOrange,
         steps = listOf(
             "🙆 双手交叉举过头顶，向上伸展，保持5秒",
             "↩️ 身体向左扭转，保持5秒",
@@ -88,7 +95,7 @@ val activities = listOf(
         id = "legs",
         name = "下肢活动",
         duration = "45秒",
-        bgColor = Color(0xFFE9D5FF),
+        bgColor = TintPurple,
         steps = listOf(
             "🦶 坐在椅子上，抬起左脚伸直，保持5秒",
             "🦶 抬起右脚伸直，保持5秒",
@@ -101,7 +108,7 @@ val activities = listOf(
         id = "eye",
         name = "20-20-20护眼",
         duration = "60秒",
-        bgColor = Color(0xFFFEE2E2),
+        bgColor = TintRed,
         steps = listOf(
             "👀 看向20英尺（约6米）外的物体",
             "👁️ 保持视线在远处物体上20秒",
@@ -115,7 +122,7 @@ val activities = listOf(
         id = "breath",
         name = "深呼吸放松",
         duration = "30秒",
-        bgColor = Color(0xFFCCFBF1),
+        bgColor = TintTeal,
         steps = listOf(
             "🫁 用鼻子缓慢吸气4秒，感受腹部鼓起",
             "🫁 屏住呼吸4秒",
@@ -220,7 +227,7 @@ private fun ActivityFigure(activityId: String) {
         val h = size.height
         val cx = w / 2f
         val cy = h / 2f
-        val strokeColor = Color(0xFF374151)
+        val strokeColor = Slate
         val strokeWidth = 3f
 
         when (activityId) {

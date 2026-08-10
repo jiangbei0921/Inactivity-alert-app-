@@ -9,6 +9,10 @@ class CheckInRepository(private val checkInDao: CheckInDao) {
         checkInDao.insert(record)
     }
 
+    suspend fun delete(record: CheckInRecord) {
+        checkInDao.delete(record)
+    }
+
     suspend fun getTodayStandCount(startOfDay: Long, endOfDay: Long): Int {
         return checkInDao.getTodayCountByType(startOfDay, endOfDay, CheckInRecord.TYPE_STAND_UP)
     }

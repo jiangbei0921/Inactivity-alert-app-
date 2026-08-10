@@ -58,6 +58,17 @@ import com.sitbreak.app.ui.theme.CardBackground
 import com.sitbreak.app.ui.theme.PageBackground
 import com.sitbreak.app.ui.theme.TextPrimary
 import com.sitbreak.app.ui.theme.TextSecondary
+import com.sitbreak.app.ui.theme.AccentOrange
+import com.sitbreak.app.ui.theme.AccentRed
+import com.sitbreak.app.ui.theme.AmberDark
+import com.sitbreak.app.ui.theme.BlueLight
+import com.sitbreak.app.ui.theme.Slate
+import com.sitbreak.app.ui.theme.SuccessBg
+import com.sitbreak.app.ui.theme.SuccessGreen
+import com.sitbreak.app.ui.theme.TintOrange
+import com.sitbreak.app.ui.theme.TintRed
+import com.sitbreak.app.ui.theme.WarningBg
+import com.sitbreak.app.ui.theme.WarningYellow
 
 @Composable
 fun HelpDetailScreen(
@@ -155,7 +166,7 @@ private fun UsageContent() {
     steps.forEach { (icon, stepTitle, desc) ->
         DetailCard(
             icon = icon,
-            iconBgColor = Color(0xFFDBEAFE),
+            iconBgColor = BlueLight,
             iconTint = BluePrimary,
             title = stepTitle,
             content = desc,
@@ -179,8 +190,8 @@ private fun AudienceContent() {
     audiences.forEach { (icon, title, desc) ->
         DetailCard(
             icon = icon,
-            iconBgColor = Color(0xFFDCFCE7),
-            iconTint = Color(0xFF16A34A),
+            iconBgColor = SuccessBg,
+            iconTint = SuccessGreen,
             title = title,
             content = desc,
         )
@@ -202,8 +213,8 @@ private fun DangersContent() {
     dangers.forEach { (icon, title, desc) ->
         DetailCard(
             icon = icon,
-            iconBgColor = Color(0xFFFFEDD5),
-            iconTint = Color(0xFFEA580C),
+            iconBgColor = TintOrange,
+            iconTint = AccentOrange,
             title = title,
             content = desc,
         )
@@ -212,7 +223,7 @@ private fun DangersContent() {
 
     AppCard(
         modifier = Modifier.fillMaxWidth(),
-        containerColor = Color(0xFFFEF9C3),
+        containerColor = WarningBg,
     ) {
         Row(
             modifier = Modifier
@@ -223,14 +234,14 @@ private fun DangersContent() {
             Icon(
                 imageVector = Icons.Outlined.Warning,
                 contentDescription = null,
-                tint = Color(0xFFCA8A04),
+                tint = WarningYellow,
                 modifier = Modifier.size(20.dp),
             )
             Spacer(modifier = Modifier.width(10.dp))
             Text(
                 text = "世界卫生组织建议：每坐 30~60 分钟应起身活动 5~10 分钟",
                 fontSize = 13.sp,
-                color = Color(0xFF92400E),
+                color = AmberDark,
                 lineHeight = 22.sp,
             )
         }
@@ -243,8 +254,8 @@ private fun ContactContent() {
 
     DetailCard(
         icon = Icons.Outlined.Email,
-        iconBgColor = Color(0xFFFEE2E2),
-        iconTint = Color(0xFFDC2626),
+        iconBgColor = TintRed,
+        iconTint = AccentRed,
         title = "反馈邮箱",
         content = "2185428966@qq.com",
     )
@@ -332,7 +343,7 @@ private fun DetailCard(
                 Text(
                     text = content,
                     fontSize = 13.sp,
-                    color = Color(0xFF374151),
+                    color = Slate,
                     lineHeight = 22.sp,
                 )
             }

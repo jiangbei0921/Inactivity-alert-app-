@@ -28,7 +28,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.EventSeat
+import androidx.compose.material.icons.outlined.FitnessCenter
+import androidx.compose.material.icons.outlined.LocalFireDepartment
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Button
@@ -37,7 +40,11 @@ import com.sitbreak.app.TimerState
 import com.sitbreak.app.health.StandingValidator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -73,8 +80,13 @@ import com.sitbreak.app.navigation.Routes
 import com.sitbreak.app.data.db.CheckInRecord
 import com.sitbreak.app.ui.components.ActivityIcon
 import com.sitbreak.app.ui.components.ActivityType
+import com.sitbreak.app.ui.components.EmptyState
 import com.sitbreak.app.ui.components.SectionHeader
 import com.sitbreak.app.ui.components.StatCard
+import com.sitbreak.app.ui.components.hapticClickable
+import com.sitbreak.app.ui.components.rememberHapticClick
+import com.sitbreak.app.ui.theme.AccentRed
+import com.sitbreak.app.ui.theme.AccentOrange
 import com.sitbreak.app.ui.theme.BlueLight
 import com.sitbreak.app.ui.theme.BluePrimary
 import com.sitbreak.app.ui.theme.BorderGray
@@ -84,7 +96,14 @@ import com.sitbreak.app.ui.theme.TextPrimary
 import com.sitbreak.app.ui.theme.TextSecondary
 import com.sitbreak.app.ui.components.AppCard
 import com.sitbreak.app.ui.theme.TextTertiary
+import com.sitbreak.app.ui.theme.RadiusButton
+import com.sitbreak.app.ui.theme.SkyDark
+import com.sitbreak.app.ui.theme.SuccessGreen
+import com.sitbreak.app.ui.theme.TintSky
+import com.sitbreak.app.ui.theme.WarningBg
+import com.sitbreak.app.ui.theme.WarningDark
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
@@ -102,6 +121,7 @@ fun HomeScreen(
     val todayActiveHours by viewModel.todayActiveHours.collectAsState()
     val todayRecords by viewModel.todayRecords.collectAsState()
     val lastStandVerified by viewModel.lastStandVerified.collectAsState()
+    val currentStreak by viewModel.currentStreak.collectAsState()
 
     val progress = if (targetSeconds > 0) {
         (elapsedSeconds.toFloat() / targetSeconds).coerceIn(0f, 1f)
@@ -122,7 +142,7 @@ fun HomeScreen(
         item { Spacer(modifier = Modifier.height(20.dp)) }
 
         if (timerState == TimerState.Idle) {
-            item { WelcomeCard(onStart = { viewModel.startTimer() }) }
+            item { WelcomeCard(onStart = { viewModel.startTimer() }, currentStreak = currentStreak, navController = navController) }
             item { Spacer(modifier = Modifier.height(16.dp)) }
             item {
                 TodayInfoCard(
@@ -145,11 +165,11 @@ fun HomeScreen(
                 TimerState.Running -> {
                     item {
                         Button(
-                            onClick = { viewModel.onPause() },
+                            onClick = rememberHapticClick { viewModel.onPause() },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(48.dp),
-                            shape = RoundedCornerShape(14.dp),
+                            shape = RadiusButton,
                             colors = ButtonDefaults.buttonColors(containerColor = CardBackground),
                         ) {
                             Text(
@@ -163,9 +183,9 @@ fun HomeScreen(
                     }
                     item {
                         OutlinedButton(
-                            onClick = { viewModel.onStop() },
+                            onClick = rememberHapticClick { viewModel.onStop() },
                             modifier = Modifier.fillMaxWidth().height(48.dp),
-                            shape = RoundedCornerShape(14.dp),
+                            shape = RadiusButton,
                             colors = ButtonDefaults.outlinedButtonColors(
                                 containerColor = CardBackground,
                                 contentColor = TextSecondary,
@@ -181,11 +201,11 @@ fun HomeScreen(
                 TimerState.Paused -> {
                     item {
                         Button(
-                            onClick = { viewModel.onResume() },
+                            onClick = rememberHapticClick { viewModel.onResume() },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(48.dp),
-                            shape = RoundedCornerShape(14.dp),
+                            shape = RadiusButton,
                             colors = ButtonDefaults.buttonColors(containerColor = BluePrimary),
                         ) {
                             Text(
@@ -199,9 +219,9 @@ fun HomeScreen(
                     }
                     item {
                         OutlinedButton(
-                            onClick = { viewModel.onStop() },
+                            onClick = rememberHapticClick { viewModel.onStop() },
                             modifier = Modifier.fillMaxWidth().height(48.dp),
-                            shape = RoundedCornerShape(14.dp),
+                            shape = RadiusButton,
                             colors = ButtonDefaults.outlinedButtonColors(
                                 containerColor = CardBackground,
                                 contentColor = TextSecondary,
@@ -217,11 +237,11 @@ fun HomeScreen(
                 TimerState.Reminder -> {
                     item {
                         Button(
-                            onClick = { viewModel.onStandUp() },
+                            onClick = rememberHapticClick { viewModel.onStandUp() },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(48.dp),
-                            shape = RoundedCornerShape(14.dp),
+                            shape = RadiusButton,
                             colors = ButtonDefaults.buttonColors(containerColor = BluePrimary),
                         ) {
                             Text(stringResource(R.string.home_stand_up), color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.W500)
@@ -230,9 +250,9 @@ fun HomeScreen(
                     }
                     item {
                         OutlinedButton(
-                            onClick = { viewModel.onSnooze() },
+                            onClick = rememberHapticClick { viewModel.onSnooze() },
                             modifier = Modifier.fillMaxWidth().height(48.dp),
-                            shape = RoundedCornerShape(14.dp),
+                            shape = RadiusButton,
                             colors = ButtonDefaults.outlinedButtonColors(
                                 containerColor = CardBackground,
                                 contentColor = TextSecondary,
@@ -252,18 +272,18 @@ fun HomeScreen(
                                 text = stringResource(R.string.home_step_verified),
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.W500,
-                                color = Color(0xFF16A34A),
+                                color = SuccessGreen,
                                 modifier = Modifier.padding(bottom = 8.dp)
                             )
                         }
                     }
                     item {
                         Button(
-                            onClick = { viewModel.startTimer() },
+                            onClick = rememberHapticClick { viewModel.startTimer() },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(48.dp),
-                            shape = RoundedCornerShape(14.dp),
+                            shape = RadiusButton,
                             colors = ButtonDefaults.buttonColors(containerColor = BluePrimary),
                         ) {
                             Text(stringResource(R.string.home_complete_continue), color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.W500)
@@ -299,7 +319,15 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(20.dp))
             }
 
-            if (todayRecords.isNotEmpty()) {
+            if (todayRecords.isEmpty()) {
+                item {
+                    EmptyState(
+                        title = stringResource(R.string.home_no_record_title),
+                        subtitle = stringResource(R.string.home_no_record_subtitle),
+                        icon = Icons.Outlined.EventSeat,
+                    )
+                }
+            } else {
                 item {
                     SectionHeader(
                         title = stringResource(R.string.home_today_record),
@@ -315,7 +343,10 @@ fun HomeScreen(
                     ) {
                         Column {
                             todayRecords.forEach { record ->
-                                ActivityRecordItem(record = record)
+                                SwipeToDismissRecordItem(
+                                    record = record,
+                                    onDelete = { viewModel.deleteRecord(record) },
+                                )
                             }
                         }
                     }
@@ -343,7 +374,7 @@ private fun TopBar(navController: NavHostController) {
             onClick = { navController.navigate(Routes.SETTINGS) },
         )
         Text(
-            text = stringResource(R.string.home_title),
+            text = greetingFromHour(Calendar.getInstance().get(Calendar.HOUR_OF_DAY)),
             fontSize = 17.sp,
             fontWeight = FontWeight.W600,
             color = TextPrimary,
@@ -378,7 +409,7 @@ private fun TopBarIconButton(
                 ambientColor = Color.Black.copy(alpha = 0.06f),
                 spotColor = Color.Black.copy(alpha = 0.06f),
             )
-            .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier),
+            .then(if (onClick != null) Modifier.hapticClickable { onClick() } else Modifier),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
@@ -391,7 +422,11 @@ private fun TopBarIconButton(
 }
 
 @Composable
-private fun WelcomeCard(onStart: () -> Unit) {
+private fun WelcomeCard(
+    onStart: () -> Unit,
+    currentStreak: Int,
+    navController: NavHostController,
+) {
     AppCard(
         modifier = Modifier.fillMaxWidth(),
     ) {
@@ -434,19 +469,105 @@ private fun WelcomeCard(onStart: () -> Unit) {
                 color = TextSecondary,
             )
 
+            if (currentStreak > 0) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center,
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.LocalFireDepartment,
+                        contentDescription = null,
+                        tint = AccentOrange,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = stringResource(R.string.home_streak, currentStreak),
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.W600,
+                        color = AccentOrange,
+                    )
+                }
+            }
+
             Spacer(modifier = Modifier.height(20.dp))
 
+            // 快捷入口：一键直达活动与统计，强化首屏价值
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                QuickEntryChip(
+                    modifier = Modifier.weight(1f),
+                    icon = Icons.Outlined.FitnessCenter,
+                    label = stringResource(R.string.home_quick_activity),
+                    onClick = { navController.navigate(Routes.ACTIVITY) },
+                )
+                QuickEntryChip(
+                    modifier = Modifier.weight(1f),
+                    icon = Icons.Outlined.LocalFireDepartment,
+                    label = stringResource(R.string.home_quick_stats),
+                    onClick = { navController.navigate(Routes.STATS) },
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             Button(
-                onClick = onStart,
+                onClick = rememberHapticClick { onStart() },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),
-                shape = RoundedCornerShape(14.dp),
+                shape = RadiusButton,
                 colors = ButtonDefaults.buttonColors(containerColor = BluePrimary),
             ) {
                 Text(stringResource(R.string.home_start_timer), color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.W500)
             }
         }
+    }
+}
+
+@Composable
+private fun QuickEntryChip(
+    modifier: Modifier = Modifier,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = modifier
+            .clip(RadiusButton)
+            .background(CardBackground)
+            .border(1.dp, BorderGray, RadiusButton)
+            .hapticClickable { onClick() }
+            .padding(vertical = 12.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = BluePrimary,
+            modifier = Modifier.size(18.dp),
+        )
+        Spacer(modifier = Modifier.width(6.dp))
+        Text(
+            text = label,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.W500,
+            color = TextPrimary,
+        )
+    }
+}
+
+private fun greetingFromHour(hour: Int): String {
+    return when {
+        hour < 6 -> "凌晨好"
+        hour < 12 -> "上午好"
+        hour < 14 -> "中午好"
+        hour < 18 -> "下午好"
+        else -> "晚上好"
     }
 }
 
@@ -578,6 +699,41 @@ private fun CircularTimer(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SwipeToDismissRecordItem(
+    record: CheckInRecord,
+    onDelete: () -> Unit,
+) {
+    val dismissState = rememberSwipeToDismissBoxState(
+        confirmValueChange = { value ->
+            if (value == SwipeToDismissBoxValue.EndToStart) {
+                onDelete()
+                true
+            } else false
+        }
+    )
+    SwipeToDismissBox(
+        state = dismissState,
+        backgroundContent = {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(AccentRed.copy(alpha = 0.12f))
+                    .padding(end = 20.dp),
+                contentAlignment = Alignment.CenterEnd,
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Delete,
+                    contentDescription = stringResource(R.string.home_delete_record),
+                    tint = AccentRed,
+                )
+            }
+        },
+        content = { ActivityRecordItem(record = record) },
+    )
+}
+
 @Composable
 private fun ActivityRecordItem(record: CheckInRecord) {
     val timeFormatter = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
@@ -633,7 +789,7 @@ private fun NotificationPermissionBanner() {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFFFEF9C3))
+            .background(WarningBg)
             .padding(horizontal = 16.dp, vertical = 10.dp)
             .clickable(onClickLabel = openLabel, role = Role.Button) {
                 val shouldShowRationale = activity?.shouldShowRequestPermissionRationale(
@@ -652,7 +808,7 @@ private fun NotificationPermissionBanner() {
         Text(
             text = stringResource(R.string.home_notification_permission_banner),
             fontSize = 13.sp,
-            color = Color(0xFF854F0B)
+            color = WarningDark
         )
     }
 }
@@ -680,7 +836,7 @@ private fun StepVerificationBanner() {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFFE0F2FE))
+            .background(TintSky)
             .padding(horizontal = 16.dp, vertical = 10.dp)
             .clickable(onClickLabel = openLabel, role = Role.Button) {
                 val shouldShowRationale = activity?.shouldShowRequestPermissionRationale(
@@ -699,7 +855,7 @@ private fun StepVerificationBanner() {
         Text(
             text = stringResource(R.string.home_step_verify_banner),
             fontSize = 13.sp,
-            color = Color(0xFF075985)
+            color = SkyDark
         )
     }
 }

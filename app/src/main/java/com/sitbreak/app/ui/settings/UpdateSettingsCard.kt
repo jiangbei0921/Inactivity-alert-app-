@@ -44,6 +44,8 @@ import com.sitbreak.app.ui.theme.SuccessGreen
 import com.sitbreak.app.ui.theme.TextPrimary
 import com.sitbreak.app.ui.theme.TextSecondary
 import com.sitbreak.app.ui.theme.TextTertiary
+import com.sitbreak.app.ui.theme.AccentRed
+import com.sitbreak.app.ui.components.rememberHapticClick
 import com.sitbreak.app.update.UpdateState
 import com.sitbreak.app.update.UpdateStrategy
 import com.sitbreak.app.update.UpdateViewModel
@@ -137,7 +139,7 @@ private fun CheckAction(state: UpdateState, onCheck: () -> Unit) {
             color = BluePrimary,
         )
     } else {
-        TextButton(onClick = onCheck, contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp)) {
+        TextButton(onClick = rememberHapticClick(onCheck), contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp)) {
             Text(
                 text = stringResource(R.string.update_check),
                 fontSize = 14.sp,
@@ -270,7 +272,7 @@ private fun UpdateStatusBlock(
             is UpdateState.Failed -> {
                 StatusText(
                     stringResource(R.string.update_failed_prefix, state.message),
-                    Color(0xFFDC2626),
+                    AccentRed,
                     FontWeight.W500,
                 )
                 Spacer(Modifier.height(4.dp))
@@ -351,7 +353,7 @@ private fun ActionRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Button(
-            onClick = onPrimary,
+            onClick = rememberHapticClick(onPrimary),
             modifier = Modifier
                 .weight(1f)
                 .height(40.dp),
@@ -361,7 +363,7 @@ private fun ActionRow(
             Text(primaryText, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.W500)
         }
         androidx.compose.material3.OutlinedButton(
-            onClick = onSecondary,
+            onClick = rememberHapticClick(onSecondary),
             modifier = Modifier
                 .weight(1f)
                 .height(40.dp),
@@ -376,12 +378,12 @@ private fun ActionRow(
 
 @Composable
 private fun SecondaryOnlyRow(text: String, onClick: () -> Unit) {
-    androidx.compose.material3.OutlinedButton(
-        onClick = onClick,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(40.dp),
-        shape = RoundedCornerShape(12.dp),
+        androidx.compose.material3.OutlinedButton(
+            onClick = rememberHapticClick(onClick),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(40.dp),
+            shape = RoundedCornerShape(12.dp),
         colors = ButtonDefaults.outlinedButtonColors(contentColor = TextSecondary),
         border = androidx.compose.foundation.BorderStroke(1.dp, BorderGray),
     ) {

@@ -48,6 +48,9 @@ import com.sitbreak.app.ui.theme.PageBackground
 import com.sitbreak.app.ui.theme.TextPrimary
 import com.sitbreak.app.ui.theme.TextSecondary
 import com.sitbreak.app.ui.theme.TextTertiary
+import com.sitbreak.app.ui.theme.DangerRed
+import com.sitbreak.app.ui.theme.SuccessGreen
+import com.sitbreak.app.ui.theme.TintGreen
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
@@ -201,7 +204,7 @@ fun ActivityDetailScreen(
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp),
                         shape = RoundedCornerShape(16.dp),
-                        containerColor = Color(0xFFD1FAE5),
+                        containerColor = TintGreen,
                     ) {
                         Row(
                             modifier = Modifier
@@ -213,7 +216,7 @@ fun ActivityDetailScreen(
                             Icon(
                                 imageVector = Icons.Outlined.CheckCircle,
                                 contentDescription = null,
-                                tint = Color(0xFF16A34A),
+                                tint = SuccessGreen,
                                 modifier = Modifier.size(24.dp),
                             )
                             Spacer(modifier = Modifier.width(8.dp))
@@ -221,7 +224,7 @@ fun ActivityDetailScreen(
                                 text = "完成",
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.W600,
-                                color = Color(0xFF16A34A),
+                                color = SuccessGreen,
                             )
                         }
                     }
@@ -278,7 +281,7 @@ fun ActivityDetailScreen(
                                     .height(50.dp),
                                 shape = RoundedCornerShape(14.dp),
                                 colors = ButtonDefaults.buttonColors(
-                                    containerColor = if (isRunning) Color(0xFFEF4444) else BluePrimary,
+                                    containerColor = if (isRunning) DangerRed else BluePrimary,
                                 ),
                             ) {
                                 Icon(

@@ -41,6 +41,13 @@ import com.sitbreak.app.ui.theme.PageBackground
 import com.sitbreak.app.ui.theme.TextPrimary
 import com.sitbreak.app.ui.theme.TextSecondary
 import com.sitbreak.app.ui.theme.TextTertiary
+import com.sitbreak.app.ui.theme.AccentOrange
+import com.sitbreak.app.ui.theme.AccentRed
+import com.sitbreak.app.ui.theme.BlueLight
+import com.sitbreak.app.ui.theme.SuccessBg
+import com.sitbreak.app.ui.theme.SuccessGreen
+import com.sitbreak.app.ui.theme.TintOrange
+import com.sitbreak.app.ui.theme.TintRed
 
 @Composable
 fun HelpScreen(
@@ -120,7 +127,7 @@ fun HelpScreen(
             ) {
                 HelpMenuItem(
                     icon = Icons.Outlined.PhoneAndroid,
-                    iconBgColor = Color(0xFFDBEAFE),
+                    iconBgColor = BlueLight,
                     iconTint = BluePrimary,
                     title = "如何使用 站一站",
                     onClick = { onNavigateToDetail("usage") },
@@ -128,24 +135,24 @@ fun HelpScreen(
                 Spacer(modifier = Modifier.height(2.dp))
                 HelpMenuItem(
                     icon = Icons.Outlined.FavoriteBorder,
-                    iconBgColor = Color(0xFFDCFCE7),
-                    iconTint = Color(0xFF16A34A),
+                    iconBgColor = SuccessBg,
+                    iconTint = SuccessGreen,
                     title = "适用人群",
                     onClick = { onNavigateToDetail("audience") },
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 HelpMenuItem(
                     icon = Icons.Outlined.Warning,
-                    iconBgColor = Color(0xFFFFEDD5),
-                    iconTint = Color(0xFFEA580C),
+                    iconBgColor = TintOrange,
+                    iconTint = AccentOrange,
                     title = "久坐的危害",
                     onClick = { onNavigateToDetail("dangers") },
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 HelpMenuItem(
                     icon = Icons.Outlined.Email,
-                    iconBgColor = Color(0xFFFEE2E2),
-                    iconTint = Color(0xFFDC2626),
+                    iconBgColor = TintRed,
+                    iconTint = AccentRed,
                     title = "联系我们",
                     onClick = { onNavigateToDetail("contact") },
                 )

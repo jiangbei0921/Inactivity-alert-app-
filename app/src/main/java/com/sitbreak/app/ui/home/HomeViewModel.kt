@@ -53,6 +53,9 @@ class HomeViewModel @Inject constructor(
     private val _todayRecords = MutableStateFlow<List<CheckInRecord>>(emptyList())
     val todayRecords: StateFlow<List<CheckInRecord>> = _todayRecords.asStateFlow()
 
+    private val _currentStreak = MutableStateFlow(0)
+    val currentStreak: StateFlow<Int> = _currentStreak.asStateFlow()
+
     private val _lastStandVerified = MutableStateFlow<Boolean?>(null)
     val lastStandVerified: StateFlow<Boolean?> = _lastStandVerified.asStateFlow()
 
@@ -132,6 +135,13 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    fun deleteRecord(record: CheckInRecord) {
+        viewModelScope.launch {
+            repository.delete(record)
+            refreshStats()
+        }
+    }
+
     fun onStandUp() {
         // 本地直接依据传感器状态判断本次计时是否检测到起身活动，
         // 避免跨进程延迟读取 TimerStateHolder 导致的竞态（此前依赖 delay 轮询，不可靠）
@@ -199,6 +209,25 @@ class HomeViewModel @Inject constructor(
 
         val records = repository.getTodayRecords(startOfDay, endOfDay)
         _todayRecords.value = records
+        _currentStreak.value = computeCurrentStreak()
+    }
+
+    /** 连续打卡天数：以今天（若无记录则昨天）为终点向前数连续有记录的日数。 */
+    private suspend fun computeCurrentStreak(): Int {
+        val days = repository.getAllDistinctDays()
+        if (days.isEmpty()) return 0
+        val set = days.toSet()
+        val today = getTodayRange().first
+        val end = if (set.contains(today)) today
+        else if (set.contains(today - 86400000L)) today - 86400000L
+        else return 0
+        var streak = 0
+        var d = end
+        while (set.contains(d)) {
+            streak++
+            d -= 86400000L
+        }
+        return streak
     }
 
     private fun getTodayRange(): Pair<Long, Long> {

@@ -36,6 +36,12 @@
     <string name="home_notification_permission_banner">⚠ Enable notifications, otherwise stand reminders will not arrive  Tap to enable</string>
     <string name="home_step_verify_banner">Enable Activity Recognition to auto-verify that you really stood up  Tap to enable</string>
     <string name="home_step_verified">Movement detected ✓</string>
+    <string name="home_no_record_title">No records yet today</string>
+    <string name="home_no_record_subtitle">Finish a stand-up check-in and your trail will appear here</string>
+    <string name="home_streak">%d day streak</string>
+    <string name="home_quick_activity">Activities</string>
+    <string name="home_quick_stats">Stats</string>
+    <string name="home_delete_record">Delete this record</string>
 
     <!-- Stats Screen -->
     <string name="stats_title">Health stats</string>

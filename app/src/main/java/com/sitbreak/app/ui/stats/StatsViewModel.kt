@@ -52,6 +52,9 @@ class StatsViewModel @Inject constructor(
     private val _bestMonth = MutableStateFlow("")
     val bestMonth: StateFlow<String> = _bestMonth.asStateFlow()
 
+    private val _isLoading = MutableStateFlow(true)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
     init {
         loadWeeklyStats()
     }
@@ -153,57 +156,72 @@ class StatsViewModel @Inject constructor(
 
     private fun loadWeeklyStats() {
         viewModelScope.launch {
-            val interval = settingsDataStore.sittingIntervalMinutes.first()
-            val startHour = settingsDataStore.workStartHour.first()
-            val endHour = settingsDataStore.workEndHour.first()
-            val workingHours = endHour - startHour
-            val target = if (workingHours > 0) (workingHours * 60) / interval else 0
-            _dailyTarget.value = target
+            _isLoading.value = true
+            try {
+                val interval = settingsDataStore.sittingIntervalMinutes.first()
+                val startHour = settingsDataStore.workStartHour.first()
+                val endHour = settingsDataStore.workEndHour.first()
+                val workingHours = endHour - startHour
+                val target = if (workingHours > 0) (workingHours * 60) / interval else 0
+                _dailyTarget.value = target
 
-            val tzOffset = TimeUtils.getLocalTimezoneOffset()
-            val sevenDaysAgo = getSevenDaysAgo()
-            val counts = repository.getDailyCountsForLast7Days(sevenDaysAgo, tzOffset)
+                val tzOffset = TimeUtils.getLocalTimezoneOffset()
+                val sevenDaysAgo = getSevenDaysAgo()
+                val counts = repository.getDailyCountsForLast7Days(sevenDaysAgo, tzOffset)
 
-            val barDataList = buildBarDataList(counts, target)
-            _dailyCounts.value = barDataList
+                val barDataList = buildBarDataList(counts, target)
+                _dailyCounts.value = barDataList
 
-            val sum = barDataList.sumOf { it.count }
-            _weeklyAverage.value = if (barDataList.isNotEmpty()) {
-                sum.toFloat() / barDataList.size / target.coerceAtLeast(1)
-            } else 0f
+                val sum = barDataList.sumOf { it.count }
+                _weeklyAverage.value = if (barDataList.isNotEmpty()) {
+                    sum.toFloat() / barDataList.size / target.coerceAtLeast(1)
+                } else 0f
 
-            _totalCheckIns.value = repository.getTotalCount()
+                _totalCheckIns.value = repository.getTotalCount()
 
-            _longestStreak.value = calculateLongestStreak(target)
+                _longestStreak.value = calculateLongestStreak(target)
+            } finally {
+                _isLoading.value = false
+            }
         }
     }
 
     private fun loadMonthlyStats() {
         viewModelScope.launch {
-            _totalCheckIns.value = repository.getTotalCount()
-            // 「本月」页与「本年」页共用 12 个月柱状数据，避免该页只显示两张统计卡而无图表。
-            _monthlyStandCounts.value = computeMonthlyStandCounts(dailyTarget())
+            _isLoading.value = true
+            try {
+                _totalCheckIns.value = repository.getTotalCount()
+                // 「本月」页与「本年」页共用 12 个月柱状数据，避免该页只显示两张统计卡而无图表。
+                _monthlyStandCounts.value = computeMonthlyStandCounts(dailyTarget())
+            } finally {
+                _isLoading.value = false
+            }
         }
     }
 
     private fun loadYearlyStats() {
         viewModelScope.launch {
-            val barDataList = computeMonthlyStandCounts(dailyTarget())
+            _isLoading.value = true
+            try {
+                val barDataList = computeMonthlyStandCounts(dailyTarget())
 
-            var totalCompleted = 0
-            var maxCount = 0
-            var bestMonth = 1
-            barDataList.forEach { item ->
-                if (item.target > 0 && item.count >= item.target * 0.8f) totalCompleted++
-                if (item.count > maxCount) {
-                    maxCount = item.count
-                    bestMonth = item.monthLabel.toIntOrNull() ?: 1
+                var totalCompleted = 0
+                var maxCount = 0
+                var bestMonth = 1
+                barDataList.forEach { item ->
+                    if (item.target > 0 && item.count >= item.target * 0.8f) totalCompleted++
+                    if (item.count > maxCount) {
+                        maxCount = item.count
+                        bestMonth = item.monthLabel.toIntOrNull() ?: 1
+                    }
                 }
-            }
 
-            _monthlyStandCounts.value = barDataList
-            _yearlyCompletionRate.value = if (barDataList.isNotEmpty()) totalCompleted.toFloat() / barDataList.size else 0f
-            _bestMonth.value = "$bestMonth 月，共站立 $maxCount 次"
+                _monthlyStandCounts.value = barDataList
+                _yearlyCompletionRate.value = if (barDataList.isNotEmpty()) totalCompleted.toFloat() / barDataList.size else 0f
+                _bestMonth.value = "$bestMonth 月，共站立 $maxCount 次"
+            } finally {
+                _isLoading.value = false
+            }
         }
     }
 
