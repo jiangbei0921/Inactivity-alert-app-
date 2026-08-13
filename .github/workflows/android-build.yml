@@ -167,12 +167,13 @@ jobs:
 
       - name: Publish APK, patches & manifest to latest release
         if: github.ref == 'refs/heads/main'
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: latest
-          name: Latest APK (${{ steps.version.outputs.name }})
-          prerelease: false
-          # base-*.apk 一并发布：下一轮 CI 靠它们生成「落后两三个版本也能用」的补丁
-          files: dist/*
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          # 用官方 gh CLI 发布，避开 softprops/action-gh-release 在 Node 24 runner 上的兼容问题（Error creating policy）
+          gh release delete latest --yes 2>/dev/null || true
+          gh release create latest \
+            --title "Latest APK (${{ steps.version.outputs.name }})" \
+            --latest \
+            dist/*
